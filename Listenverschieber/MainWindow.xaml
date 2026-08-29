@@ -1,0 +1,937 @@
+﻿<Window x:Class="Listenverschieber.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Listenverschieber"
+        mc:Ignorable="d"
+        Title="Listenverschieber" Height="800" Width="1000">
+    <Window.InputBindings>
+        <KeyBinding Key="F1" Command="ApplicationCommands.Help"/>
+    </Window.InputBindings>
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Help" Executed="HilfeCommand_Executed"/>
+    </Window.CommandBindings>
+    <Window.Resources>
+        <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <SolidColorBrush x:Key="Win311TurquoiseAlt" Color="#E8FCFC"/>
+        <SolidColorBrush x:Key="Win311Turquoise" Color="#D3F6F6"/>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Menüleiste -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="_Datei">
+                <MenuItem Header="💾 Konfiguration _speichern" Click="btnPfadeSpeichern_Click"/>
+                <MenuItem Header="📂 Konfiguration _laden" Click="btnPfadeLaden_Click"/>
+                <Separator/>
+                <MenuItem Header="📤 _Exportieren..." Click="MenuExport_Click"/>
+                <Separator/>
+                <MenuItem Header="_Beenden" Click="MenuBeenden_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Hilfe">
+                <MenuItem Header="❓ _Hilfe anzeigen" InputGestureText="F1" Click="MenuHilfe_Click"/>
+                <MenuItem Header="📘 _Technische Informationen" Click="MenuTechnischeInfos_Click"/>
+                <Separator/>
+                <MenuItem Header="ℹ _Info" Click="MenuInfo_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Tab Control für verschiedene Modi -->
+        <TabControl Grid.Row="1" Margin="10,0,10,0">
+            <!-- Tab 1: Unvollständige Dateien verschieben -->
+            <TabItem Header="🔍 Unvollständige Dateien">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Überwachungspfad -->
+                    <GroupBox Header="Überwachungspfad" Grid.Row="0" Margin="0,0,0,10">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox x:Name="txtUeberwachungspfad" Grid.Row="0" Grid.Column="0" Margin="0,0,5,5" VerticalContentAlignment="Center"/>
+                            <Button x:Name="btnUeberwachungspfadDurchsuchen" Grid.Row="0" Grid.Column="1" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnUeberwachungspfadDurchsuchen_Click"/>
+                            
+                            <!-- Mehrere Überwachungspfade -->
+                            <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Height="80" Margin="0,5,5,0">
+                                <ListBox x:Name="lstUeberwachungspfade" SelectionChanged="lstUeberwachungspfade_SelectionChanged"/>
+                            </Border>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,5,0,0">
+                                <Button x:Name="btnUeberwachungspfadHinzufuegen" Content="➕ Hinzufügen" Width="100" Margin="0,0,0,5" Click="btnUeberwachungspfadHinzufuegen_Click"/>
+                                <Button x:Name="btnUeberwachungspfadEntfernen" Content="➖ Entfernen" Width="100" IsEnabled="False" Click="btnUeberwachungspfadEntfernen_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Verschiebepfad -->
+                    <GroupBox Header="Verschiebepfad" Grid.Row="1" Margin="0,0,0,10">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox x:Name="txtVerschiebepfadTab2" Grid.Row="0" Grid.Column="0" Margin="0,0,5,5" VerticalContentAlignment="Center" IsEnabled="{Binding ElementName=chkUseMoveFolderTab2, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}"/>
+                            <Button x:Name="btnVerschiebepfadDurchsuchenTab2" Grid.Row="0" Grid.Column="1" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnVerschiebepfadDurchsuchenTab2_Click" IsEnabled="{Binding ElementName=chkUseMoveFolderTab2, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}"/>
+                            
+                            <CheckBox x:Name="chkUseMoveFolderTab2" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Content="'Move' als Unterverzeichnis vom Überwachungspfad verwenden" IsChecked="True" Checked="chkUseMoveFolderTab2_CheckedChanged" Unchecked="chkUseMoveFolderTab2_CheckedChanged" Margin="0,0,0,0"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Dateiformat-Konfiguration -->
+                    <GroupBox Header="Dateiformat-Konfiguration" Grid.Row="2" Margin="0,0,0,10">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Hauptdatei-Format:" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                            <TextBox x:Name="txtHauptformat" Grid.Row="0" Grid.Column="1" Text="*" Margin="0,0,0,5" ToolTip="z.B. 'pdf', 'jpg' oder '*' für alle"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Pflichtdatei 1 (erforderlich):" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                            <TextBox x:Name="txtPflichtdatei1" Grid.Row="1" Grid.Column="1" Text="txt" Margin="0,0,0,5" ToolTip="z.B. 'txt' - MUSS vorhanden sein"/>
+                            
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Pflichtdatei 2 (optional):" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                            <TextBox x:Name="txtPflichtdatei2" Grid.Row="2" Grid.Column="1" Text="ini" Margin="0,0,0,5" ToolTip="z.B. 'ini' - Optional, leer lassen um zu ignorieren"/>
+                            
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" FontStyle="Italic" TextWrapping="Wrap" Margin="0,5,0,0">
+                                Dateien werden verschoben, wenn Pflichtdatei 1 fehlt. Pflichtdatei 2 ist optional.
+                            </TextBlock>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Timer-Konfiguration & Optionen -->
+                    <GroupBox Header="Rückverschiebung und Optionen" Grid.Row="3" Margin="0,0,0,10">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <CheckBox x:Name="chkAutoRueckverschiebung" Grid.Row="0" Grid.Column="0" 
+                                      Content="Automatisch zurückschieben nach" VerticalAlignment="Center" Margin="0,0,5,5"/>
+                            <TextBox x:Name="txtRueckschiebeZeit" Grid.Row="0" Grid.Column="1" Text="10" 
+                                     Margin="0,0,5,5" VerticalContentAlignment="Center" 
+                                     IsEnabled="{Binding ElementName=chkAutoRueckverschiebung, Path=IsChecked}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Sekunden" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                            
+
+                            <CheckBox x:Name="chkProcessAllWatchPaths" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" 
+                                      Content="✓ Alle Überwachungspfade nacheinander verarbeiten" 
+                                      VerticalAlignment="Center" Margin="0,5,0,0"
+                                      ToolTip="Wenn aktiviert: Verarbeitet automatisch alle Pfade aus der Überwachungspfad-Liste nacheinander"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Aktionsbuttons -->
+                    <Grid Grid.Row="4" Margin="0,0,0,10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Zeile 1: Suchlauf, Kopieren, Verschieben -->
+                        <Button x:Name="btnUnvollstaendigeSuchlauf" Grid.Row="0" Grid.Column="0" Content="🔍 Suchlauf" Height="35" Margin="0,0,5,5" Click="btnUnvollstaendigeSuchlauf_Click" FontWeight="Bold" ToolTip="Nur anzeigen, welche Dateien unvollständig sind (nichts wird verschoben/kopiert)"/>
+                        <Button x:Name="btnUnvollstaendigeKopieren" Grid.Row="0" Grid.Column="1" Content="📋 Kopieren" Height="35" Margin="5,0,5,5" Click="btnUnvollstaendigeKopieren_Click" FontWeight="Bold" ToolTip="Unvollständige Dateien kopieren"/>
+                        <Button x:Name="btnUnvollstaendigeVerschieben" Grid.Row="0" Grid.Column="2" Content="📦 Verschieben" Height="35" Margin="5,0,0,5" Click="btnUnvollstaendigeVerschieben_Click" FontWeight="Bold" ToolTip="Unvollständige Dateien verschieben"/>
+                        
+                        <!-- Zeile 2: Zurückschieben -->
+                        <Button x:Name="btnDateienZurueckschieben" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Content="↩ Dateien zurückschieben" Height="35" Margin="0,0,5,0" Click="btnDateienZurueckschieben_Click" IsEnabled="False" FontWeight="Bold"/>
+                        <Button x:Name="btnCountdownAbbrechen" Grid.Row="1" Grid.Column="2" Content="✖ Abbrechen" Height="35" Margin="5,0,0,0" Click="btnCountdownAbbrechen_Click" IsEnabled="False" FontWeight="Bold" ToolTip="Automatische Rückverschiebung abbrechen"/>
+                    </Grid>
+
+                    <!-- Countdown-Anzeige für automatische Rückverschiebung -->
+                    <GroupBox Header="⏱ Automatische Rückverschiebung" Grid.Row="5" Margin="0,0,0,10" x:Name="grpCountdown" Visibility="Collapsed">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="btnCountdownMinus" Grid.Row="0" Grid.Column="0" Content="➖ 5s" Width="60" Height="30" Margin="0,0,5,5"
+                                    Click="btnCountdownMinus_Click" FontWeight="Bold" ToolTip="5 Sekunden abziehen"/>
+                            <ProgressBar x:Name="progressBarCountdown" Grid.Row="0" Grid.Column="1" Height="30" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,5"
+                                         Foreground="#FF4CAF50"/>
+                            <Button x:Name="btnCountdownPlus" Grid.Row="0" Grid.Column="2" Content="➕ 5s" Width="60" Height="30" Margin="5,0,0,5"
+                                    Click="btnCountdownPlus_Click" FontWeight="Bold" ToolTip="5 Sekunden hinzufügen"/>
+                            <TextBlock x:Name="txtCountdown" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Text="Rückverschiebung in ... Sekunden" 
+                                       HorizontalAlignment="Center" FontWeight="Bold" FontSize="14"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Fortschritt für Tab 2 -->
+                    <GroupBox Header="Fortschritt" Grid.Row="6" Margin="0,0,0,10" x:Name="grpFortschritt2" Visibility="Collapsed">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ProgressBar x:Name="progressBar2" Grid.Row="0" Height="25" Minimum="0" Maximum="100" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="txtFortschritt2" Grid.Row="1" Text="Verarbeite..." HorizontalAlignment="Center" FontWeight="SemiBold"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Log für Tab 2 -->
+                    <GroupBox Header="Status" Grid.Row="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="2*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Gefundene Dateien als Tabelle -->
+                            <TextBlock Grid.Row="0" Text="Gefundene Dateien:" FontWeight="Bold" Margin="5,5,5,2"/>
+                            <DataGrid Grid.Row="1" x:Name="dgGefundeneDateienTab2" 
+                                      ItemsSource="{Binding GefundeneDateienTab2}"
+                                      AutoGenerateColumns="False" 
+                                      IsReadOnly="True" 
+                                      SelectionMode="Single"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      RowBackground="{StaticResource Win311TurquoiseAlt}"
+                                      AlternatingRowBackground="{StaticResource Win311Turquoise}"
+                                      CanUserResizeColumns="True"
+                                      CanUserSortColumns="True"
+                                      Margin="5,0,5,5">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Dateiname" Binding="{Binding Dateiname}" Width="2*"/>
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="2*"/>
+                                    <DataGridTextColumn Header="Pfad" Binding="{Binding AnzeigePfad}" Width="3*"/>
+                                    <DataGridTemplateColumn Header="Aktion" Width="Auto">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Click="btnDateiOeffnen_Click"
+                                                        Padding="5,2"
+                                                        Margin="2"
+                                                        ToolTip="Datei mit zugeordnetem Programm öffnen">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="📂" FontFamily="Segoe UI Emoji" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="Öffnen"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            
+                            <!-- Log -->
+                            <TextBlock Grid.Row="2" Text="Protokoll:" FontWeight="Bold" Margin="5,5,5,2"/>
+                            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                                <TextBox x:Name="txtLog" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                            </ScrollViewer>
+
+                            <!-- Export Button -->
+                            <Button Grid.Row="4" x:Name="btnExportTab2" Content="📤 Exportieren..." Height="30" Margin="5" Click="MenuExport_Click" 
+                                    ToolTip="Verschobene oder nicht gefundene Dateien exportieren"/>
+                            <!-- Explorer Button -->
+                            <Button Grid.Row="5" x:Name="btnOpenLogInExplorer2" Content="📁 Datei im Explorer öffnen" Height="30" Margin="5" Click="btnOpenLogInExplorer_Click" 
+                                    ToolTip="Text im Log markieren und hier klicken - öffnet die Datei im Windows Explorer"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 2: Listenverschieber -->
+            <TabItem Header="📋 Listenverschieber">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Pfad-Konfiguration -->
+                    <GroupBox Header="Pfad-Konfiguration" Grid.Row="0" Margin="0,0,0,10">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Arbeitspfad:" VerticalAlignment="Center" Margin="0,0,5,5"/>
+                            <TextBox x:Name="txtArbeitspfad" Grid.Row="0" Grid.Column="1" Margin="0,0,5,5" VerticalContentAlignment="Center"/>
+                            <Button x:Name="btnArbeitspfadDurchsuchen" Grid.Row="0" Grid.Column="2" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnArbeitspfadDurchsuchen_Click"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Verschiebepfad:" VerticalAlignment="Center" Margin="0,0,5,5"/>
+                            <TextBox x:Name="txtVerschiebepfad" Grid.Row="1" Grid.Column="1" Margin="0,0,5,5" VerticalContentAlignment="Center" IsEnabled="{Binding ElementName=chkUseMoveFolder, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}"/>
+                            <Button x:Name="btnVerschiebepfadDurchsuchen" Grid.Row="1" Grid.Column="2" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnVerschiebepfadDurchsuchen_Click" IsEnabled="{Binding ElementName=chkUseMoveFolder, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}"/>
+                            
+                            <!-- Mehrere Arbeitspfade -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Pfad-Liste:" VerticalAlignment="Top" Margin="0,5,5,0"/>
+                            <Border Grid.Row="2" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Height="80" Margin="0,5,5,0">
+                                <ListBox x:Name="lstArbeitspfade" SelectionChanged="lstArbeitspfade_SelectionChanged"/>
+                            </Border>
+                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,5,0,0">
+                                <Button x:Name="btnArbeitspfadHinzufuegen" Content="➕ Hinzufügen" Width="100" Margin="0,0,0,5" Click="btnArbeitspfadHinzufuegen_Click"/>
+                                <Button x:Name="btnArbeitspfadEntfernen" Content="➖ Entfernen" Width="100" IsEnabled="False" Click="btnArbeitspfadEntfernen_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Optionen für Verschiebepfad -->
+                    <CheckBox x:Name="chkUseMoveFolder" Grid.Row="1" Content="'Move' als Unterverzeichnis von Arbeitspfad verwenden" Margin="0,0,0,10" Checked="chkUseMoveFolder_CheckedChanged" Unchecked="chkUseMoveFolder_CheckedChanged"/>
+
+                    <!-- Liste Laden -->
+                    <GroupBox Header="Dateiliste" Grid.Row="2" Margin="0,0,0,10">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox x:Name="txtListendatei" Grid.Row="0" Grid.Column="0" Margin="0,0,5,5" VerticalContentAlignment="Center" IsReadOnly="True"/>
+                            <Button x:Name="btnListeLaden" Grid.Row="0" Grid.Column="1" Content="TXT Laden" Width="100" Margin="0,0,5,5" Click="btnListeLaden_Click"/>
+                            <Button x:Name="btnCsvLaden" Grid.Row="0" Grid.Column="2" Content="CSV Laden" Width="100" Margin="0,0,5,5" Click="btnCsvLaden_Click"/>
+                            <Button x:Name="btnOrdnerListeLaden" Grid.Row="0" Grid.Column="3" Content="Ordner Laden" Width="100" Margin="0,0,0,5" Click="btnOrdnerListeLaden_Click"
+                                    ToolTip="Liest die Dateinamen direkt aus einem Ordner ein (entspricht 'dir *.* /B')."/>
+
+                            <!-- CSV Spaltenauswahl -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Visibility="Collapsed" x:Name="pnlCsvSpalte">
+                                <TextBlock Text="CSV-Spalte:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ComboBox x:Name="cmbCsvSpalte" Width="200" SelectionChanged="cmbCsvSpalte_SelectionChanged"/>
+                                <TextBlock x:Name="txtCsvInfo" VerticalAlignment="Center" Margin="10,0,0,0" FontStyle="Italic"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Optionen -->
+                    <GroupBox Header="Optionen" Grid.Row="3" Margin="0,0,0,10">
+                        <StackPanel Margin="5">
+                            <CheckBox x:Name="chkIgnoreExtensionInList" Content="Dateiendung in Liste ignorieren und alle Dateien mit gleichem Namen verschieben" 
+                                      Margin="0,0,0,5" IsChecked="True" 
+                                      ToolTip="Wenn aktiviert: 'Test.PDF' in der Liste verschiebt auch Test.TXT, Test.INI, etc."/>
+
+                            <GroupBox Header="Teilname-Suche" Margin="0,5,0,5">
+                                <StackPanel Margin="5">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Suchmodus:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox x:Name="cmbTeilnameModus" Width="260" SelectedIndex="0"
+                                                  SelectionChanged="cmbTeilnameModus_SelectionChanged">
+                                            <ComboBoxItem Content="Aus - exakter Dateiname"/>
+                                            <ComboBoxItem Content="Von VORNE - Dateiname BEGINNT mit Eintrag"/>
+                                            <ComboBoxItem Content="Von HINTEN - Dateiname ENDET mit Eintrag"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <TextBlock x:Name="txtTeilnameBeschreibung" Margin="0,6,0,0" TextWrapping="Wrap"
+                                               FontStyle="Italic" Foreground="#555555"/>
+
+                                    <GroupBox x:Name="grpTrennzeichen" Header="Trennzeichen- und Abschnittssuche" Margin="0,8,0,0" IsEnabled="False">
+                                        <StackPanel Margin="5">
+                                            <CheckBox x:Name="chkTrennzeichenSuche" Content="Trennzeichen-/Abschnittssuche aktivieren"
+                                                      IsChecked="False" Checked="chkTrennzeichenSuche_Changed" Unchecked="chkTrennzeichenSuche_Changed"
+                                                      ToolTip="Zerlegt den Dateinamen anhand eines Trennzeichens in Abschnitte, z.B. IMG_20261112_WA0086_12345 mit '_'."/>
+                                            <StackPanel x:Name="pnlTrennzeichen" Margin="20,8,0,0"
+                                                        IsEnabled="{Binding IsChecked, ElementName=chkTrennzeichenSuche}">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                    <TextBlock Text="Trennzeichen:" VerticalAlignment="Center" Width="90"/>
+                                                    <CheckBox x:Name="chkTrennzeichenAuto" Content="automatisch erkennen" VerticalAlignment="Center"
+                                                              IsChecked="True"
+                                                              ToolTip="Erkennt das häufigste Trennzeichen aus dem Listeneintrag (_ - . , ; Leerzeichen)."/>
+                                                    <TextBlock Text="manuell:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                                                    <TextBox x:Name="txtTrennzeichen" Width="45" MaxLength="3" Text="_" VerticalAlignment="Center"
+                                                             IsEnabled="{Binding IsChecked, ElementName=chkTrennzeichenAuto, Converter={StaticResource InverseBooleanConverter}}"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                    <TextBlock Text="Abschnitt:" VerticalAlignment="Center" Width="90"/>
+                                                    <CheckBox x:Name="chkAbschnittAuto" Content="alle Abschnitte prüfen" VerticalAlignment="Center" IsChecked="True"
+                                                              ToolTip="Probiert alle vorhandenen Abschnitte durch."/>
+                                                    <TextBlock Text="fester Abschnitt:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                                                    <TextBox x:Name="txtAbschnittNummer" Width="45" Text="1" VerticalAlignment="Center"
+                                                             IsEnabled="{Binding IsChecked, ElementName=chkAbschnittAuto, Converter={StaticResource InverseBooleanConverter}}"/>
+                                                </StackPanel>
+                                                <CheckBox x:Name="chkEinzelabschnittsuche" Content="Einzelabschnittsuche (nur den einzelnen Abschnitt vergleichen statt kumuliert)"
+                                                          IsChecked="False"
+                                                          ToolTip="Abschnitt 2 von IMG_20261112_WA0086 ist dann '20261112' statt 'IMG_20261112'."/>
+                                                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" FontStyle="Italic" Foreground="#555555"
+                                                           Text="Beispiel IMG_20261112_WA0086 mit Trennzeichen '_': kumuliert ergibt Abschnitt 1 = IMG, Abschnitt 2 = IMG_20261112, Abschnitt 3 = IMG_20261112_WA0086. Mit Einzelabschnittsuche: IMG, 20261112, WA0086."/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </GroupBox>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <CheckBox x:Name="chkDuplikateFiltern" Content="Doppelte Einträge in der Liste filtern (exakter Dateiname)"
+                                      Margin="0,0,0,5" IsChecked="False"
+                                      ToolTip="Verarbeitet jeden Listeneintrag nur einmal. Vergleich erfolgt exakt - 'Datei.pdf' und 'Datei (1).pdf' gelten NICHT als doppelt."/>
+                            <CheckBox x:Name="chkProcessAllPaths" Content="✓ Alle Pfade aus der Liste nacheinander verarbeiten" 
+                                      Margin="0,0,0,0" IsChecked="False" 
+                                      ToolTip="Wenn aktiviert: Verarbeitet automatisch alle Pfade aus der Pfad-Liste nacheinander"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Dateien verschieben Button -->
+                    <Grid Grid.Row="4" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="btnDateienSuchlauf" Grid.Column="0" Content="🔍 Suchlauf" Height="35" Margin="0,0,5,0" Click="btnDateienSuchlauf_Click" IsEnabled="False" FontWeight="Bold" ToolTip="Nur anzeigen, was gefunden/nicht gefunden wurde (nichts wird verschoben/kopiert)"/>
+                        <Button x:Name="btnDateienKopieren" Grid.Column="1" Content="📋 Kopieren" Height="35" Margin="5,0,5,0" Click="btnDateienKopieren_Click" IsEnabled="False" FontWeight="Bold" ToolTip="Dateien kopieren statt verschieben"/>
+                        <Button x:Name="btnDateienVerschieben" Grid.Column="2" Content="📦 Verschieben" Height="35" Margin="5,0,0,0" Click="btnDateienVerschieben_Click" IsEnabled="False" FontWeight="Bold" ToolTip="Dateien verschieben"/>
+                    </Grid>
+
+                    <!-- Fortschrittsanzeige -->
+                    <GroupBox Header="Fortschritt" Grid.Row="5" Margin="0,0,0,10" x:Name="grpFortschritt" Visibility="Collapsed">
+                        <Grid Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ProgressBar x:Name="progressBar" Grid.Row="0" Height="25" Minimum="0" Maximum="100" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="txtFortschritt" Grid.Row="1" Text="Verarbeite..." HorizontalAlignment="Center" FontWeight="SemiBold"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Log/Status Ausgabe -->
+                    <GroupBox Header="Status" Grid.Row="6">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Gefundene Dateien als Tabelle -->
+                            <TextBlock Grid.Row="0" Text="Gefundene Dateien:" FontWeight="Bold" Margin="5,5,5,2"/>
+                            <DataGrid Grid.Row="1" x:Name="dgGefundeneDateien" 
+                                      ItemsSource="{Binding GefundeneDateien}"
+                                      AutoGenerateColumns="False" 
+                                      IsReadOnly="True" 
+                                      SelectionMode="Single"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      RowBackground="{StaticResource Win311TurquoiseAlt}"
+                                      AlternatingRowBackground="{StaticResource Win311Turquoise}"
+                                      CanUserResizeColumns="True"
+                                      CanUserSortColumns="True"
+                                      Margin="5,0,5,5">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Dateiname" Binding="{Binding Dateiname}" Width="2*"/>
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="2*"/>
+                                    <DataGridTextColumn Header="Pfad" Binding="{Binding AnzeigePfad}" Width="3*"/>
+                                    <DataGridTemplateColumn Header="Aktion" Width="Auto">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Click="btnDateiOeffnen_Click"
+                                                        Padding="5,2"
+                                                        Margin="2"
+                                                        ToolTip="Datei mit zugeordnetem Programm öffnen">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="📂" FontFamily="Segoe UI Emoji" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="Öffnen"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            
+                            <!-- Export Button -->
+                            <Button Grid.Row="2" x:Name="btnExportTab1" Content="📤 Exportieren..." Height="30" Margin="5" Click="MenuExport_Click" 
+                                    ToolTip="Verschobene oder nicht gefundene Dateien exportieren"/>
+                            <!-- Explorer Button -->
+                            <Button Grid.Row="3" x:Name="btnOpenLogInExplorer1" Content="📁 Datei im Explorer öffnen" Height="30" Margin="5" Click="btnOpenLogInExplorer_Click" 
+                                    ToolTip="Text im Log markieren und hier klicken - öffnet die Datei im Windows Explorer"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 3: Inhaltsbasiert umbenennen -->
+            <TabItem Header="✏ Dateien umbenennen">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Pfadkonfiguration -->
+                        <GroupBox Header="Arbeitspfad" Grid.Row="0" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="txtUmbArbeitspfad" Grid.Row="0" Grid.Column="0" Margin="0,0,5,5" VerticalContentAlignment="Center"/>
+                                <Button x:Name="btnUmbArbeitspfadDurchsuchen" Grid.Row="0" Grid.Column="1" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnUmbArbeitspfadDurchsuchen_Click"/>
+
+                                <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Height="80" Margin="0,5,5,0">
+                                    <ListBox x:Name="lstUmbArbeitspfade" SelectionChanged="lstUmbArbeitspfade_SelectionChanged"/>
+                                </Border>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,5,0,0">
+                                    <Button x:Name="btnUmbArbeitspfadHinzufuegen" Content="➕ Hinzufügen" Width="100" Margin="0,0,0,5" Click="btnUmbArbeitspfadHinzufuegen_Click"/>
+                                    <Button x:Name="btnUmbArbeitspfadEntfernen" Content="➖ Entfernen" Width="100" IsEnabled="False" Click="btnUmbArbeitspfadEntfernen_Click"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="chkUmbUnterordner" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"
+                                          Content="Unterordner einbeziehen"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Inhaltssuche -->
+                        <GroupBox Header="Inhaltssuche (Wert aus der Datei)" Grid.Row="1" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Suchbegriff:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <TextBox x:Name="txtUmbSuchschluessel" Grid.Row="0" Grid.Column="1" Text="Datum=" Margin="0,0,0,5" VerticalContentAlignment="Center"
+                                         ToolTip="Der Text, hinter dem der gesuchte Wert steht. Beispiel: 'Datum=' findet in 'Datum=01.04.2025' den Wert '01.04.2025'."/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Durchsuchte Endungen:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <ComboBox x:Name="cmbUmbQuelldateiEndungen" Grid.Row="1" Grid.Column="1" Margin="0,0,0,5"
+                                          IsEditable="True" DisplayMemberPath="Anzeige" VerticalContentAlignment="Center"
+                                          ToolTip="Dateityp aus der Liste wählen oder eigene Endungen semikolon-getrennt eintippen, z.B. ini;txt;pdf&#x0a;'*.*' durchsucht alle unterstützten Dateitypen."/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="Gray" FontSize="11"
+                                           Text="Auswahl aus der Liste treffen oder eigene Endungen semikolon-getrennt eintippen (z.B. ini;txt;pdf). Mit '*.*' werden alle unterstützten Dateitypen durchsucht: txt, ini, log, csv, xml, json, pdf (durchsuchbar), docx und xlsx. Der Wert wird immer aus der jeweils zugehörigen Datei gelesen (gleicher Name ohne Endung)."/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Umbenennungsregel -->
+                        <GroupBox Header="Umbenennungsregel (Dateiname)" Grid.Row="2" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Trennzeichen:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <TextBox x:Name="txtUmbTrennzeichen" Grid.Row="0" Grid.Column="1" Text="_" Margin="0,0,15,5" VerticalContentAlignment="Center"
+                                         ToolTip="Trennzeichen im Dateinamen, z.B. '_' bei IMG_20261112_WA0086_12345"/>
+
+                                <StackPanel Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,5">
+                                    <TextBlock Text="Abschnittstyp:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <RadioButton x:Name="rbUmbWertDatum" GroupName="UmbWerttyp" Content="Datum (Format anpassen)" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                 Checked="rbUmbWerttyp_Changed"
+                                                 ToolTip="Der gefundene Wert wird als Datum gelesen und in das Zielformat umgewandelt."/>
+                                    <RadioButton x:Name="rbUmbWertText" GroupName="UmbWerttyp" Content="Text (unverändert)" VerticalAlignment="Center"
+                                                 Checked="rbUmbWerttyp_Changed"
+                                                 ToolTip="Der gefundene Wert wird ohne Umwandlung in den Abschnitt eingesetzt - z.B. Kundennummer, Filiale, Belegnummer."/>
+                                </StackPanel>
+
+                                <RadioButton x:Name="rbUmbAbschnittAuto" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" GroupName="UmbAbschnitt"
+                                             Content="Abschnitt automatisch finden"
+                                             IsChecked="True" Margin="0,0,0,3" Checked="rbUmbAbschnitt_Changed"
+                                             ToolTip="Sucht den ersten Abschnitt, der zum Dateinamen-Format bzw. zum Suchmuster passt."/>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="20,0,0,6">
+                                    <TextBlock x:Name="lblUmbAutoMuster" Text="Der Abschnitt besteht aus:" VerticalAlignment="Center" Margin="0,0,8,0" IsEnabled="False"/>
+                                    <ComboBox x:Name="cmbUmbAutoMusterTyp" Width="230" VerticalContentAlignment="Center" IsEnabled="False"
+                                              SelectedIndex="0" SelectionChanged="cmbUmbAutoMusterTyp_SelectionChanged">
+                                        <ComboBoxItem Content="nur Ziffern (z.B. 3939393939)"/>
+                                        <ComboBoxItem Content="nur Buchstaben (z.B. IMG)"/>
+                                        <ComboBoxItem Content="Buchstaben und/oder Ziffern"/>
+                                        <ComboBoxItem Content="beliebigem Inhalt"/>
+                                        <ComboBoxItem Content="eigenem Muster (für Profis)"/>
+                                    </ComboBox>
+
+                                    <TextBlock x:Name="lblUmbAutoLaenge" Text="Länge:" VerticalAlignment="Center" Margin="12,0,6,0" IsEnabled="False"/>
+                                    <TextBox x:Name="txtUmbAutoLaenge" Width="45" VerticalContentAlignment="Center" IsEnabled="False"
+                                             ToolTip="Optional: genaue Zeichenanzahl des Abschnitts. Leer lassen = beliebige Länge."/>
+                                    <TextBlock x:Name="lblUmbAutoLaengeHinweis" Text="Zeichen (leer = egal)" VerticalAlignment="Center" Margin="6,0,0,0" Foreground="Gray" FontSize="11" IsEnabled="False"/>
+
+                                    <TextBox x:Name="txtUmbAutoMuster" Text="^\d+$" Width="150" Margin="12,0,0,0" VerticalContentAlignment="Center"
+                                             Visibility="Collapsed"
+                                             ToolTip="Regulärer Ausdruck für den zu ersetzenden Abschnitt."/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <RadioButton x:Name="rbUmbAbschnittFest" GroupName="UmbAbschnitt" Content="Fester Abschnitt Nr.:" VerticalAlignment="Center" Checked="rbUmbAbschnitt_Changed"/>
+                                    <TextBox x:Name="txtUmbAbschnittNummer" Text="4" Width="50" Margin="8,0,12,0" VerticalContentAlignment="Center"
+                                             IsEnabled="False"
+                                             ToolTip="1-basiert. Bei IMG_20261112_WA0086_12345 ist 20261112 vorwärts der 2. und rückwärts der 3. Abschnitt."/>
+                                    <RadioButton x:Name="rbUmbRichtungVorwaerts" GroupName="UmbRichtung" Content="vorwärts (vom Anfang)" IsChecked="True" IsEnabled="False" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                 ToolTip="Abschnitte werden von vorne gezählt: Abschnitt 1 ist der Namensanfang."/>
+                                    <RadioButton x:Name="rbUmbRichtungRueckwaerts" GroupName="UmbRichtung" Content="rückwärts (vom Ende)" IsEnabled="False" VerticalAlignment="Center"
+                                                 ToolTip="Abschnitte werden von hinten gezählt: Abschnitt 1 ist der letzte Abschnitt."/>
+                                </StackPanel>
+
+                                <TextBlock x:Name="lblUmbQuellFormatInhalt" Grid.Row="4" Grid.Column="0" Text="Format im Inhalt:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <TextBox x:Name="txtUmbQuellFormatInhalt" Grid.Row="4" Grid.Column="1" Text="dd.MM.yyyy" Margin="0,0,15,5" VerticalContentAlignment="Center"
+                                         ToolTip=".NET-Datumsmuster des Werts in der Datei, z.B. dd.MM.yyyy für 01.04.2025"/>
+
+                                <TextBlock x:Name="lblUmbQuellFormatDateiname" Grid.Row="4" Grid.Column="2" Text="Format im Dateinamen:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <TextBox x:Name="txtUmbQuellFormatDateiname" Grid.Row="4" Grid.Column="3" Text="yyyyMMdd" Margin="0,0,0,5" VerticalContentAlignment="Center"
+                                         ToolTip=".NET-Datumsmuster des vorhandenen Abschnitts, z.B. yyyyMMdd für 20261112"/>
+
+                                <TextBlock x:Name="lblUmbZielFormat" Grid.Row="5" Grid.Column="0" Text="Zielformat:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="txtUmbZielFormatDateiname" Grid.Row="5" Grid.Column="1" Text="yyyyMMdd" Margin="0,0,15,0" VerticalContentAlignment="Center"
+                                         ToolTip="So wird der neue Abschnitt geschrieben, z.B. yyyyMMdd ergibt 20250401"/>
+
+                                <CheckBox x:Name="chkUmbGleichnamige" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"
+                                          Content="Alle gleichnamigen Dateien mitumbenennen" IsChecked="True"
+                                          ToolTip="Benennt alle Dateien mit gleichem Namen ohne Endung mit um (z.B. .pdf, .txt, .ini)"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Aktionen -->
+                        <Grid Grid.Row="3" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="btnUmbVorschau" Grid.Column="0" Content="🔍 Vorschau erstellen" Height="35" Margin="0,0,5,0" Click="btnUmbVorschau_Click"/>
+                            <Button x:Name="btnUmbAusfuehren" Grid.Column="1" Content="✏ Umbenennen ausführen" Height="35" Margin="5,0,0,0" IsEnabled="False" Click="btnUmbAusfuehren_Click"/>
+                        </Grid>
+
+                        <!-- Status -->
+                        <GroupBox Header="Status" Grid.Row="4" MinHeight="300">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="120"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Vorschau:" FontWeight="Bold" Margin="5,5,5,2"/>
+                                <DataGrid Grid.Row="1" x:Name="dgUmbVorschau"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          RowBackground="{StaticResource Win311TurquoiseAlt}"
+                                          AlternatingRowBackground="{StaticResource Win311Turquoise}"
+                                          CanUserResizeColumns="True"
+                                          CanUserSortColumns="True"
+                                          MinHeight="150"
+                                          Margin="5,0,5,5">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Alter Name" Binding="{Binding BasisName}" Width="2*"/>
+                                        <DataGridTextColumn Header="Neuer Name" Binding="{Binding NeuerBasisName}" Width="2*"/>
+                                        <DataGridTextColumn Header="Gefundener Wert" Binding="{Binding GefundenerWert}" Width="Auto"/>
+                                        <DataGridTextColumn Header="Quelle" Binding="{Binding Quelldatei}" Width="Auto"/>
+                                        <DataGridTextColumn Header="Betroffene Dateien" Binding="{Binding BetroffeneDateienAnzeige}" Width="2*"/>
+                                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="1.5*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Grid.Row="2" Text="Protokoll:" FontWeight="Bold" Margin="5,5,5,2"/>
+                                <TextBox Grid.Row="3" x:Name="txtUmbLog" IsReadOnly="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" Margin="5,0,5,5" FontFamily="Consolas" FontSize="11"/>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 4: Inhaltssuche -->
+            <TabItem Header="🔎 Inhaltssuche">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Suchpfad -->
+                        <GroupBox Header="Suchpfad" Grid.Row="0" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="txtInhSuchpfad" Grid.Row="0" Grid.Column="0" Margin="0,0,5,5" VerticalContentAlignment="Center"/>
+                                <Button x:Name="btnInhSuchpfadDurchsuchen" Grid.Row="0" Grid.Column="1" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnInhSuchpfadDurchsuchen_Click"/>
+
+                                <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Height="70" Margin="0,5,5,0">
+                                    <ListBox x:Name="lstInhSuchpfade" SelectionChanged="lstInhSuchpfade_SelectionChanged"/>
+                                </Border>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,5,0,0">
+                                    <Button x:Name="btnInhSuchpfadHinzufuegen" Content="➕ Hinzufügen" Width="100" Margin="0,0,0,5" Click="btnInhSuchpfadHinzufuegen_Click"/>
+                                    <Button x:Name="btnInhSuchpfadEntfernen" Content="➖ Entfernen" Width="100" IsEnabled="False" Click="btnInhSuchpfadEntfernen_Click"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="chkInhUnterordner" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"
+                                          Content="Unterordner einbeziehen"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Zielpfad -->
+                        <GroupBox Header="Zielpfad (für Kopieren/Verschieben)" Grid.Row="1" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="txtInhZielpfad" Grid.Row="0" Grid.Column="0" Margin="0,0,5,5" VerticalContentAlignment="Center"
+                                         IsEnabled="{Binding ElementName=chkInhUseMoveFolder, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}"/>
+                                <Button x:Name="btnInhZielpfadDurchsuchen" Grid.Row="0" Grid.Column="1" Content="Durchsuchen..." Width="100" Margin="0,0,0,5" Click="btnInhZielpfadDurchsuchen_Click"
+                                        IsEnabled="{Binding ElementName=chkInhUseMoveFolder, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}"/>
+
+                                <CheckBox x:Name="chkInhUseMoveFolder" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                          Content="'Move' als Unterverzeichnis vom Suchpfad verwenden" IsChecked="True"
+                                          Checked="chkInhUseMoveFolder_Changed" Unchecked="chkInhUseMoveFolder_Changed"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Suchbegriff -->
+                        <GroupBox Header="Gesuchter Inhalt" Grid.Row="2" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Suchtext:" VerticalAlignment="Top" Margin="0,4,8,5"/>
+                                <TextBox x:Name="txtInhSuchbegriff" Grid.Row="0" Grid.Column="1" Margin="0,0,0,3"
+                                         AcceptsReturn="True" TextWrapping="NoWrap" Height="70"
+                                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                         FontFamily="Consolas"
+                                         ToolTip="Mehrere Zeilen möglich. Jede Zeile ist ein eigenes Suchkriterium."/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="Gray" FontSize="11"
+                                           Text="Mehrere Zeilen eingeben, um aufeinanderfolgende Zeilen zu suchen. Mit Platzhaltern findet z.B. 'Nummer=*' jede beliebige Nummer."/>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Suchart:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <ComboBox x:Name="cmbInhSuchModus" Width="290" VerticalContentAlignment="Center" SelectedIndex="0">
+                                        <ComboBoxItem Content="Zeilen müssen direkt aufeinanderfolgen"/>
+                                        <ComboBoxItem Content="Alle Zeilen müssen vorkommen (Reihenfolge egal)"/>
+                                        <ComboBoxItem Content="Mindestens eine Zeile muss vorkommen"/>
+                                    </ComboBox>
+
+                                    <TextBlock Text="Durchsuchte Endungen:" VerticalAlignment="Center" Margin="15,0,8,0"/>
+                                    <ComboBox x:Name="cmbInhDateiEndungen" Width="260" VerticalContentAlignment="Center"
+                                              IsEditable="True" DisplayMemberPath="Anzeige"
+                                              ToolTip="Dateityp aus der Liste wählen oder eigene Endungen semikolon-getrennt eintippen, z.B. txt;ini;pdf&#x0a;'*.*' durchsucht alle unterstützten Dateitypen."/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                    <CheckBox x:Name="chkInhPlatzhalter" Content="Platzhalter * und ? verwenden" Margin="0,0,15,0"
+                                              ToolTip="* steht für beliebig viele Zeichen, ? für genau ein Zeichen.&#x0a;Beispiel: 'Nummer=*' findet jede Nummer."/>
+                                    <CheckBox x:Name="chkInhGrossKlein" Content="Groß-/Kleinschreibung beachten" Margin="0,0,15,0"/>
+                                    <CheckBox x:Name="chkInhGleichnamige" Content="Gleichnamige Dateien mitnehmen" IsChecked="True"
+                                              ToolTip="Nimmt alle Dateien mit gleichem Namen ohne Endung mit (z.B. Beleg.pdf zu Beleg.ini)."/>
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Aktionen -->
+                        <GroupBox Header="Aktion" Grid.Row="3" Margin="0,0,0,10">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button x:Name="btnInhSuchlauf" Grid.Row="0" Grid.Column="0" Content="🔍 Suchlauf" Height="35" Margin="0,0,5,5" Click="btnInhSuchlauf_Click"
+                                        ToolTip="Nur suchen und anzeigen - es wird nichts verändert."/>
+                                <Button x:Name="btnInhKopieren" Grid.Row="0" Grid.Column="1" Content="📋 Kopieren" Height="35" Margin="5,0,5,5" Click="btnInhKopieren_Click"/>
+                                <Button x:Name="btnInhVerschieben" Grid.Row="0" Grid.Column="2" Content="📦 Verschieben" Height="35" Margin="5,0,5,5" Click="btnInhVerschieben_Click"/>
+                                <Button x:Name="btnInhAbbrechen" Grid.Row="0" Grid.Column="3" Content="⛔ Abbrechen" Height="35" Width="110" Margin="5,0,0,5" IsEnabled="False" Click="btnInhAbbrechen_Click"/>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal">
+                                    <TextBlock Text="Wenn Zieldatei existiert:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <ComboBox x:Name="cmbInhKonflikt" Width="220" VerticalContentAlignment="Center" SelectedIndex="0">
+                                        <ComboBoxItem Content="Überspringen"/>
+                                        <ComboBoxItem Content="Automatisch umbenennen (1), (2) ..."/>
+                                        <ComboBoxItem Content="Überschreiben"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Fortschritt -->
+                        <Grid Grid.Row="4" Margin="0,0,0,10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ProgressBar x:Name="progressBarInh" Grid.Row="0" Height="20" Minimum="0" Maximum="100" Margin="0,0,0,3"/>
+                            <TextBlock x:Name="txtInhFortschritt" Grid.Row="1" Text="Bereit" HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="11"/>
+                        </Grid>
+
+                        <!-- Status -->
+                        <GroupBox Header="Status" Grid.Row="5" MinHeight="300">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="120"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Gefundene Dateien:" FontWeight="Bold" Margin="5,5,5,2"/>
+                                <DataGrid Grid.Row="1" x:Name="dgInhGefundeneDateien"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          RowBackground="{StaticResource Win311TurquoiseAlt}"
+                                          AlternatingRowBackground="{StaticResource Win311Turquoise}"
+                                          CanUserResizeColumns="True"
+                                          CanUserSortColumns="True"
+                                          MinHeight="150"
+                                          Margin="5,0,5,5">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Dateiname" Binding="{Binding Dateiname}" Width="2*"/>
+                                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="1.5*"/>
+                                        <DataGridTextColumn Header="Fundstelle" Binding="{Binding Fundstelle}" Width="3*"/>
+                                        <DataGridTextColumn Header="Pfad" Binding="{Binding AnzeigePfad}" Width="2*"/>
+                                        <DataGridTemplateColumn Header="Aktion" Width="Auto">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Click="btnInhDateiOeffnen_Click" Padding="5,2" Margin="2"
+                                                            ToolTip="Datei mit zugeordnetem Programm öffnen">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="📂" FontFamily="Segoe UI Emoji" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Öffnen"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Grid.Row="2" Text="Protokoll:" FontWeight="Bold" Margin="5,5,5,2"/>
+                                <TextBox Grid.Row="3" x:Name="txtInhLog" IsReadOnly="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" Margin="5,0,5,5" FontFamily="Consolas" FontSize="11"/>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Statusleiste -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock x:Name="txtStatus" Text="Bereit"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

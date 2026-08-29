@@ -1,0 +1,100 @@
+<Window x:Class="Listenverschieber.ExportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Exportieren" 
+        Height="450" 
+        Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        MinHeight="420"
+        MinWidth="500">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Datenquelle -->
+        <GroupBox Header="Was moechten Sie exportieren?" Grid.Row="0" Margin="0,0,0,10">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <RadioButton x:Name="rbVerschoben" Content="Verschobene Dateien" Margin="0,0,0,8" IsChecked="True" Checked="RadioButton_Checked"/>
+                    <RadioButton x:Name="rbNichtGefunden" Content="Nicht gefundene Dateien" Checked="RadioButton_Checked"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <RadioButton x:Name="rbSuchprotokoll" Content="Suchprotokoll" Margin="0,0,0,8" Checked="RadioButton_Checked"/>
+                    <RadioButton x:Name="rbKopierprotokoll" Content="Kopierprotokoll" Margin="0,0,0,8" Checked="RadioButton_Checked"/>
+                    <RadioButton x:Name="rbKomplettesProtokoll" Content="Komplettes Protokoll" Checked="RadioButton_Checked"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- Format -->
+        <GroupBox Header="Format" Grid.Row="1" Margin="0,0,0,10">
+            <StackPanel Margin="10">
+                <RadioButton x:Name="rbTxt" Content="TXT (Textdatei)" Margin="0,0,0,8" IsChecked="True" Checked="RadioButton_Checked"/>
+                <RadioButton x:Name="rbCsv" Content="CSV (mit Header-Zeile)" Checked="RadioButton_Checked"/>
+                <TextBlock x:Name="txtFormatHinweis" FontSize="11" Foreground="#FF666666" Margin="0,6,0,0" Visibility="Collapsed"
+                           Text="Hinweis: Protokolle werden als TXT exportiert (CSV ist deaktiviert)."/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Encoding -->
+        <GroupBox Header="Zeichenkodierung" Grid.Row="2" Margin="0,0,0,10">
+            <StackPanel Margin="10">
+                <RadioButton x:Name="rbAnsi" Content="ANSI (Windows-1252)" Margin="0,0,0,8" IsChecked="True" Checked="RadioButton_Checked"/>
+                <RadioButton x:Name="rbUtf8" Content="UTF-8 (Unicode)" Checked="RadioButton_Checked"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Info Bereich -->
+        <Border Grid.Row="3" BorderBrush="#FFD0D0D0" BorderThickness="1" Background="#FFF9F9F9" Padding="10" Margin="0,0,0,15">
+            <StackPanel>
+                <TextBlock x:Name="txtInfo" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <TextBlock x:Name="txtDateiname" FontSize="11" Foreground="#FF666666" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Spacer -->
+        <Rectangle Grid.Row="4" Fill="Transparent"/>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="5" Margin="0,0,0,0" VerticalAlignment="Bottom">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <Button x:Name="btnExport" 
+                    Grid.Column="1" 
+                    Content="Exportieren" 
+                    Width="110" 
+                    Height="32" 
+                    Margin="0,0,10,0" 
+                    Click="btnExport_Click" 
+                    IsDefault="True" 
+                    FontWeight="SemiBold"
+                    Background="#FF0078D4"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand"/>
+            <Button x:Name="btnAbbrechen" 
+                    Grid.Column="2" 
+                    Content="Abbrechen" 
+                    Width="110" 
+                    Height="32" 
+                    Click="btnAbbrechen_Click" 
+                    IsCancel="True"
+                    Cursor="Hand"/>
+        </Grid>
+    </Grid>
+</Window>

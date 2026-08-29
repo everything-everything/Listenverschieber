@@ -1,0 +1,163 @@
+// =============================================================================
+// EXPORT-FUNKTIONEN FÜR LISTENVERSCHIEBER
+// Diese Funktionen am Ende der MainWindow.xaml.cs Datei einfügen
+// vor dem letzten schließenden }
+// =============================================================================
+
+#region Export Funktionen
+
+private void MenuExportVerschobenTxtAnsi_Click(object sender, RoutedEventArgs e)
+{
+    ExportListe(verschobeneDateienListe, "Verschobene_Dateien", "txt", Encoding.GetEncoding(1252));
+}
+
+private void MenuExportVerschobenTxtUtf8_Click(object sender, RoutedEventArgs e)
+{
+    ExportListe(verschobeneDateienListe, "Verschobene_Dateien", "txt", Encoding.UTF8);
+}
+
+private void MenuExportVerschobenCsvAnsi_Click(object sender, RoutedEventArgs e)
+{
+    ExportListeAlsCsv(verschobeneDateienListe, "Verschobene_Dateien", Encoding.GetEncoding(1252));
+}
+
+private void MenuExportVerschobenCsvUtf8_Click(object sender, RoutedEventArgs e)
+{
+    ExportListeAlsCsv(verschobeneDateienListe, "Verschobene_Dateien", Encoding.UTF8);
+}
+
+private void MenuExportNichtGefundenTxtAnsi_Click(object sender, RoutedEventArgs e)
+{
+    ExportListe(nichtGefundeneDateienListe, "Nicht_gefundene_Dateien", "txt", Encoding.GetEncoding(1252));
+}
+
+private void MenuExportNichtGefundenTxtUtf8_Click(object sender, RoutedEventArgs e)
+{
+    ExportListe(nichtGefundeneDateienListe, "Nicht_gefundene_Dateien", "txt", Encoding.UTF8);
+}
+
+private void MenuExportNichtGefundenCsvAnsi_Click(object sender, RoutedEventArgs e)
+{
+    ExportListeAlsCsv(nichtGefundeneDateienListe, "Nicht_gefundene_Dateien", Encoding.GetEncoding(1252));
+}
+
+private void MenuExportNichtGefundenCsvUtf8_Click(object sender, RoutedEventArgs e)
+{
+    ExportListeAlsCsv(nichtGefundeneDateienListe, "Nicht_gefundene_Dateien", Encoding.UTF8);
+}
+
+private void ExportListe(List<string> liste, string beschreibung, string erweiterung, Encoding encoding)
+{
+    if (liste == null || liste.Count == 0)
+    {
+        System.Windows.MessageBox.Show($"Keine Daten zum Exportieren vorhanden!\n\n{beschreibung.Replace("_", " ")} ist leer.", 
+            "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+        return;
+    }
+
+    var dialog = new Microsoft.Win32.SaveFileDialog
+    {
+        Title = $"{beschreibung.Replace("_", " ")} exportieren",
+        Filter = $"Textdateien (*.{erweiterung})|*.{erweiterung}|Alle Dateien (*.*)|*.*",
+        DefaultExt = erweiterung,
+        FileName = $"{beschreibung}_{DateTime.Now:yyyyMMdd_HHmmss}.{erweiterung}"
+    };
+
+    if (dialog.ShowDialog() == true)
+    {
+        try
+        {
+            File.WriteAllLines(dialog.FileName, liste, encoding);
+            
+            string encodingName = encoding.EncodingName.Contains("1252") ? "ANSI" : "UTF-8";
+            LogMessage($"{beschreibung.Replace("_", " ")} exportiert: {dialog.FileName} ({encodingName}, {liste.Count} Einträge)");
+            
+            System.Windows.MessageBox.Show(
+                $"{beschreibung.Replace("_", " ")} erfolgreich exportiert!\n\n" +
+                $"Datei: {Path.GetFileName(dialog.FileName)}\n" +
+                $"Encoding: {encodingName}\n" +
+                $"Einträge: {liste.Count}", 
+                "Export erfolgreich", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Fehler beim Exportieren:\n\n{ex.Message}", 
+                "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+            LogMessage($"FEHLER beim Export: {ex.Message}");
+        }
+    }
+}
+
+private void ExportListeAlsCsv(List<string> liste, string beschreibung, Encoding encoding)
+{
+    if (liste == null || liste.Count == 0)
+    {
+        System.Windows.MessageBox.Show($"Keine Daten zum Exportieren vorhanden!\n\n{beschreibung.Replace("_", " ")} ist leer.", 
+            "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+        return;
+    }
+
+    var dialog = new Microsoft.Win32.SaveFileDialog
+    {
+        Title = $"{beschreibung.Replace("_", " ")} als CSV exportieren",
+        Filter = "CSV-Dateien (*.csv)|*.csv|Alle Dateien (*.*)|*.*",
+        DefaultExt = "csv",
+        FileName = $"{beschreibung}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+    };
+
+    if (dialog.ShowDialog() == true)
+    {
+        try
+        {
+            var csvLines = new List<string>();
+            
+            // Header
+            csvLines.Add("Dateiname;Zeitstempel");
+            
+            // Daten
+            string zeitstempel = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            foreach (var datei in liste)
+            {
+                // CSV-Escaping: Wenn Semikolon oder Anführungszeichen im Namen, dann in Anführungszeichen setzen
+                string escapedDatei = datei;
+                if (datei.Contains(";") || datei.Contains("\""))
+                {
+                    escapedDatei = $"\"{datei.Replace("\"", "\"\"")}\"";
+                }
+                csvLines.Add($"{escapedDatei};{zeitstempel}");
+            }
+            
+            File.WriteAllLines(dialog.FileName, csvLines, encoding);
+            
+            string encodingName = encoding.EncodingName.Contains("1252") ? "ANSI" : "UTF-8";
+            LogMessage($"{beschreibung.Replace("_", " ")} als CSV exportiert: {dialog.FileName} ({encodingName}, {liste.Count} Einträge)");
+            
+            System.Windows.MessageBox.Show(
+                $"{beschreibung.Replace("_", " ")} erfolgreich als CSV exportiert!\n\n" +
+                $"Datei: {Path.GetFileName(dialog.FileName)}\n" +
+                $"Encoding: {encodingName}\n" +
+                $"Einträge: {liste.Count}", 
+                "Export erfolgreich", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Fehler beim Exportieren:\n\n{ex.Message}", 
+                "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+            LogMessage($"FEHLER beim CSV-Export: {ex.Message}");
+        }
+    }
+}
+
+#endregion
+
+// =============================================================================
+// ZUSÄTZLICH: Diese beiden Listen zu den Klassenvariablen hinzufügen (oben in der Klasse):
+// =============================================================================
+// private List<string> verschobeneDateienListe = new List<string>();
+// private List<string> nichtGefundeneDateienListe = new List<string>();
+// 
+// ZUSÄTZLICH: In DateienVerschiebenAsync() und DateienVerschiebenInPfadAsync() 
+// die Listen befüllen:
+// - verschobeneDateienListe.Add(fileName); nach File.Move()
+// - nichtGefundeneDateienListe.Add(dateiName); wenn nicht gefunden
+// =============================================================================

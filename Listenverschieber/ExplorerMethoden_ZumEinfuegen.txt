@@ -1,0 +1,140 @@
+// ============================================================================
+// FÜGEN SIE DIESEN CODE IN MainWindow.xaml.cs EIN
+// Einfügen vor dem letzten "#endregion" und vor der schließenden Klammer "}}"
+// ============================================================================
+
+#region Explorer-Funktionen
+
+/// <summary>
+/// Öffnet eine aus dem Log ausgewählte Datei im Windows Explorer
+/// </summary>
+private void btnOpenLogInExplorer_Click(object sender, RoutedEventArgs e)
+{
+    // Bestimme welches Log (Tab 1 oder Tab 2)
+    var button = sender as Button;
+    bool isTab2 = button?.Name == "btnOpenLogInExplorer2";
+    
+    // Hole den ausgewählten/markierten Text aus dem entsprechenden Log
+    string selectedText = isTab2 ? GetSelectedTextFromLog(txtLog2) : GetSelectedTextFromLog(txtLog);
+    
+    if (string.IsNullOrWhiteSpace(selectedText))
+    {
+        System.Windows.MessageBox.Show(
+            "Bitte markieren Sie zuerst eine Zeile im Log, die einen Dateinamen enthält.\n\n" +
+            "Tipp: Markieren Sie die ganze Zeile mit einem Dateinamen (z.B. 'Verschoben: Dokument.pdf')",
+            "Keine Auswahl",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+        return;
+    }
+
+    // Extrahiere Dateiname aus der Log-Zeile
+    var dateiname = ExplorerHelper.ExtrahiereDateinameAusLog(selectedText);
+    
+    if (string.IsNullOrWhiteSpace(dateiname))
+    {
+        System.Windows.MessageBox.Show(
+            $"Konnte keinen Dateinamen in der ausgewählten Zeile finden:\n\n{selectedText}\n\n" +
+            "Stellen Sie sicher, dass die Zeile einen Dateinamen enthält.",
+            "Kein Dateiname gefunden",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+        return;
+    }
+
+    // Sammle mögliche Suchpfade
+    var suchpfade = new List<string>();
+    
+    if (isTab2)
+    {
+        // Tab 2: Überwachungspfad und Verschiebepfad
+        suchpfade.Add(txtUeberwachungspfad.Text);
+        suchpfade.Add(txtVerschiebepfadTab2.Text);
+        
+        // Füge auch alle Pfade aus der Liste hinzu
+        if (lstUeberwachungspfade.ItemsSource is List<string> liste2)
+        {
+            suchpfade.AddRange(liste2);
+        }
+    }
+    else
+    {
+        // Tab 1: Arbeitspfad und Verschiebepfad
+        suchpfade.Add(txtArbeitspfad.Text);
+        suchpfade.Add(txtVerschiebepfad.Text);
+        
+        // Füge auch alle Pfade aus der Liste hinzu
+        if (lstArbeitspfade.ItemsSource is List<string> liste1)
+        {
+            suchpfade.AddRange(liste1);
+        }
+    }
+
+    // Suche die Datei
+    var gefundenerPfad = ExplorerHelper.FindeDatei(dateiname, suchpfade.ToArray());
+    
+    if (string.IsNullOrEmpty(gefundenerPfad))
+    {
+        // Zeige Dialog mit Möglichkeit, manuell zu suchen
+        var result = System.Windows.MessageBox.Show(
+            $"Die Datei '{dateiname}' wurde in den konfigurierten Pfaden nicht gefunden.\n\n" +
+            $"Durchsuchte Pfade:\n{string.Join("\n", suchpfade.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => "• " + p))}\n\n" +
+            "Möchten Sie den Ordner trotzdem öffnen?",
+            "Datei nicht gefunden",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+        
+        if (result == MessageBoxResult.Yes && suchpfade.Count > 0)
+        {
+            var ersterpfad = suchpfade.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p) && Directory.Exists(p));
+            if (!string.IsNullOrEmpty(ersterpfad))
+            {
+                ExplorerHelper.OeffneImExplorer(ersterpfad);
+            }
+        }
+        return;
+    }
+
+    // Öffne die Datei im Explorer
+    ExplorerHelper.OeffneImExplorer(gefundenerPfad);
+    
+    // Log die Aktion
+    if (isTab2)
+        LogMessage2($"?? Im Explorer geöffnet: {Path.GetFileName(gefundenerPfad)}");
+    else
+        LogMessage($"?? Im Explorer geöffnet: {Path.GetFileName(gefundenerPfad)}");
+}
+
+/// <summary>
+/// Holt den ausgewählten Text aus einer TextBox
+/// </summary>
+private string GetSelectedTextFromLog(TextBox logTextBox)
+{
+    if (logTextBox == null)
+        return string.Empty;
+
+    // Wenn Text ausgewählt ist, gib diesen zurück
+    if (!string.IsNullOrEmpty(logTextBox.SelectedText))
+        return logTextBox.SelectedText;
+
+    // Sonst versuche die aktuelle Zeile zu finden
+    if (logTextBox.CaretIndex >= 0 && !string.IsNullOrEmpty(logTextBox.Text))
+    {
+        var text = logTextBox.Text;
+        var caretIndex = logTextBox.CaretIndex;
+        
+        // Finde Anfang der Zeile
+        var zeilenAnfang = text.LastIndexOf('\n', Math.Max(0, caretIndex - 1)) + 1;
+        
+        // Finde Ende der Zeile
+        var zeilenEnde = text.IndexOf('\n', caretIndex);
+        if (zeilenEnde == -1)
+            zeilenEnde = text.Length;
+        
+        return text.Substring(zeilenAnfang, zeilenEnde - zeilenAnfang).Trim();
+    }
+
+    return string.Empty;
+}
+
+#endregion

@@ -1,0 +1,48 @@
+<Window x:Class="Listenverschieber.OrdnerListeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Liste aus Ordner laden" Height="270" Width="620"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Ordner, dessen Dateien als Liste geladen werden sollen:" Margin="0,0,0,5"/>
+
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="txtPfad" Grid.Column="0" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
+            <Button x:Name="btnDurchsuchen" Grid.Column="1" Content="Durchsuchen..." Width="110" Click="BtnDurchsuchen_Click"/>
+        </Grid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Dateifilter:" VerticalAlignment="Center" Width="80"/>
+            <ComboBox x:Name="cmbFilter" Width="180" SelectedIndex="0" SelectionChanged="CmbFilter_SelectionChanged">
+                <ComboBoxItem Content="*.*  (alle Dateien)"/>
+                <ComboBoxItem Content="*.pdf"/>
+                <ComboBoxItem Content="*.txt"/>
+                <ComboBoxItem Content="*.ini"/>
+                <ComboBoxItem Content="Benutzerdefiniert"/>
+            </ComboBox>
+            <TextBlock Text="*." VerticalAlignment="Center" Margin="15,0,2,0"/>
+            <TextBox x:Name="txtCustomFilter" Width="90" VerticalContentAlignment="Center" IsEnabled="False"
+                     ToolTip="Nur die Endung angeben, z.B. bin"/>
+        </StackPanel>
+
+        <CheckBox x:Name="chkUnterordner" Grid.Row="3" Content="Unterordner einbeziehen" Margin="80,0,0,0"/>
+
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Width="90" Margin="0,0,10,0" IsDefault="True" Click="BtnOk_Click"/>
+            <Button Content="Abbrechen" Width="90" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

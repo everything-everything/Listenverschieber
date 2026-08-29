@@ -1,0 +1,111 @@
+THIRD-PARTY NOTICES
+Hinweise zu Komponenten von Drittanbietern
+===========================================
+
+Programm : Listenverschieber
+Version  : 3.11
+Autor    : everything-everything (https://github.com/everything-everything)
+Lizenz   : MIT-Lizenz - siehe LICENSE.txt
+
+Dieses Programm verwendet die nachfolgend aufgeführten Komponenten von
+Drittanbietern. Alle genannten Komponenten stehen unter permissiven Lizenzen
+und dürfen kostenlos - auch kommerziell - eingesetzt werden. Das Urheberrecht
+an diesen Komponenten liegt jeweils bei den dort genannten Rechteinhabern.
+
+
+-------------------------------------------------------------------------------
+1. PdfPig 0.1.10
+-------------------------------------------------------------------------------
+Zweck    : Textextraktion aus durchsuchbaren PDF-Dateien
+Projekt  : https://github.com/UglyToad/PdfPig
+Lizenz   : Apache-Lizenz, Version 2.0
+Volltext : https://www.apache.org/licenses/LICENSE-2.0
+
+   Copyright 2017-2025 UglyToad und Mitwirkende
+
+   Lizenziert unter der Apache-Lizenz, Version 2.0 (die "Lizenz"). Die
+   Verwendung dieser Datei ist nur in Übereinstimmung mit der Lizenz gestattet.
+   Eine Kopie der Lizenz ist unter der oben genannten Adresse erhältlich.
+
+   Sofern nicht durch geltendes Recht vorgeschrieben oder schriftlich
+   vereinbart, wird die unter der Lizenz vertriebene Software ohne
+   Mängelgewähr und ohne ausdrückliche oder stillschweigende Gewährleistung
+   jeglicher Art vertrieben. Die genauen Bedingungen und Beschränkungen sind
+   der Lizenz zu entnehmen.
+
+   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+   use this file except in compliance with the License. You may obtain a copy
+   of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+   License for the specific language governing permissions and limitations
+   under the License.
+
+   Hinweis: PdfPig enthält seinerseits Bestandteile, die auf PDFBox
+   (Apache Software Foundation) zurückgehen.
+
+
+-------------------------------------------------------------------------------
+2. DocumentFormat.OpenXml 3.1.0
+-------------------------------------------------------------------------------
+Zweck    : Textextraktion aus Word- (.docx) und Excel-Dateien (.xlsx)
+Projekt  : https://github.com/dotnet/Open-XML-SDK
+Lizenz   : MIT-Lizenz
+
+   Copyright (c) Microsoft Corporation
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+
+
+-------------------------------------------------------------------------------
+3. System.Text.Encoding.CodePages 9.0.9
+-------------------------------------------------------------------------------
+Zweck    : Unterstützung älterer Zeichensätze (z. B. Windows-1252)
+Projekt  : https://github.com/dotnet/runtime
+Lizenz   : MIT-Lizenz
+
+   Copyright (c) .NET Foundation und Mitwirkende
+
+   Es gilt der unter Punkt 2 wiedergegebene Text der MIT-Lizenz.
+
+
+-------------------------------------------------------------------------------
+4. .NET-Laufzeitumgebung und WPF (.NET 8)
+-------------------------------------------------------------------------------
+Zweck    : Laufzeitumgebung und Oberflächentechnik; bei selbstenthaltender
+           Veröffentlichung sind Teile davon im Programmpaket enthalten
+Projekt  : https://github.com/dotnet/runtime
+           https://github.com/dotnet/wpf
+Lizenz   : MIT-Lizenz
+
+   Copyright (c) .NET Foundation und Mitwirkende
+
+   Es gilt der unter Punkt 2 wiedergegebene Text der MIT-Lizenz.
+
+
+-------------------------------------------------------------------------------
+Hinweis zur Vollständigkeit
+-------------------------------------------------------------------------------
+Diese Übersicht bezieht sich auf die oben genannte Programmversion. Bei einer
+Aktualisierung der verwendeten Pakete ist sie entsprechend anzupassen. Eine
+aktuelle Aufstellung der eingebundenen Pakete findet sich in der Projektdatei
+Listenverschieber/Listenverschieber.csproj sowie im Hilfe-Fenster des Programms
+unter "Technische Informationen".

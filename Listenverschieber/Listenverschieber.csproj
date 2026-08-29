@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <!-- Angaben, die in den Dateieigenschaften der EXE erscheinen -->
+    <Version>3.11.0</Version>
+    <AssemblyVersion>3.11.0.0</AssemblyVersion>
+    <FileVersion>3.11.0.0</FileVersion>
+    <Product>Listenverschieber</Product>
+    <AssemblyTitle>Listenverschieber</AssemblyTitle>
+    <Description>Werkzeug zum Sortieren, Verschieben, Umbenennen und Durchsuchen großer Dateibestände.</Description>
+    <Authors>everything-everything</Authors>
+    <Company>everything-everything</Company>
+    <Copyright>© 2026 everything-everything - MIT-Lizenz</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/everything-everything/Listenverschieber</RepositoryUrl>
+
+    <!-- Für die Veröffentlichung als eigenständige EXE -->
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
+    <SatelliteResourceLanguages>de;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.9" />
+    <!-- PdfPig: Apache-2.0, DocumentFormat.OpenXml: MIT - beide kommerziell frei nutzbar -->
+    <PackageReference Include="PdfPig" Version="0.1.10" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
+  </ItemGroup>
+
+  <!-- Lizenzdateien werden mit ausgegeben, damit sie im Release-Paket enthalten sind -->
+  <ItemGroup>
+    <Content Include="..\LICENSE.txt" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

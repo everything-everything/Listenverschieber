@@ -1,0 +1,52 @@
+<Window x:Class="Listenverschieber.InfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Info über Listenverschieber"
+        Height="560" Width="620"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock x:Name="txtTitel" FontSize="22" FontWeight="Bold" Text="Listenverschieber"/>
+            <TextBlock x:Name="txtVersion" FontSize="13" Foreground="#555555" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Autor" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock x:Name="txtAutor" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                <TextBlock Margin="0,0,0,14">
+                    <Hyperlink x:Name="linkGitHub" RequestNavigate="Hyperlink_RequestNavigate">
+                        <Run x:Name="runGitHub"/>
+                    </Hyperlink>
+                </TextBlock>
+
+                <TextBlock Text="Mitwirkende KI" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock x:Name="txtKi" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                <TextBlock Text="Lizenz" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock x:Name="txtLizenz" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                <TextBlock Text="Lizenzen der verwendeten Komponenten" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock x:Name="txtFremdlizenzen" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                <TextBlock Text="Haftungsausschluss" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock TextWrapping="Wrap"
+                           Text="Die Software wird ohne jede Gewährleistung bereitgestellt. Der Autor haftet nicht für Datenverluste oder Schäden, die aus der Verwendung entstehen. Vor dem Verschieben, Umbenennen oder Löschen größerer Datenbestände wird eine Datensicherung empfohlen."/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button x:Name="btnHilfe" Content="Hilfe öffnen" Width="120" Height="28" Margin="0,0,8,0" Click="btnHilfe_Click"/>
+            <Button x:Name="btnKopieren" Content="Kopieren" Width="100" Height="28" Margin="0,0,8,0" Click="btnKopieren_Click"/>
+            <Button Content="Schließen" Width="100" Height="28" IsCancel="True" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
