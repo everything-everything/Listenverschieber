@@ -2,32 +2,34 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Exportieren" 
-        Height="450" 
-        Width="500"
+        Height="640" 
+        Width="520"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
-        MinHeight="420"
-        MinWidth="500">
+        MinHeight="600"
+        MinWidth="520">
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Datenquelle -->
-        <GroupBox Header="Was moechten Sie exportieren?" Grid.Row="0" Margin="0,0,0,10">
+        <GroupBox Header="Was möchten Sie exportieren?" Grid.Row="0" Margin="0,0,0,10">
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="1.4*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <RadioButton x:Name="rbVerschoben" Content="Verschobene Dateien" Margin="0,0,0,8" IsChecked="True" Checked="RadioButton_Checked"/>
-                    <RadioButton x:Name="rbNichtGefunden" Content="Nicht gefundene Dateien" Checked="RadioButton_Checked"/>
+                    <RadioButton x:Name="rbVerschoben" Content="Verarbeitete Dateien" Margin="0,0,0,8" IsChecked="True" Checked="RadioButton_Checked"/>
+                    <RadioButton x:Name="rbNichtGefunden" Content="Nicht verarbeitete Dateien" Margin="0,0,0,8" Checked="RadioButton_Checked"/>
+                    <RadioButton x:Name="rbAlle" Content="Alle Dateien" Checked="RadioButton_Checked"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1">
                     <RadioButton x:Name="rbSuchprotokoll" Content="Suchprotokoll" Margin="0,0,0,8" Checked="RadioButton_Checked"/>
@@ -47,8 +49,57 @@
             </StackPanel>
         </GroupBox>
 
+        <!-- Kuerzen am Trennzeichen -->
+        <GroupBox Header="Namen am Trennzeichen kürzen" Grid.Row="2" Margin="0,0,0,10">
+            <StackPanel Margin="10">
+                <CheckBox x:Name="chkKuerzen" Content="Dateinamen beim Export kürzen"
+                          Margin="0,0,0,8" Checked="Kuerzen_Changed" Unchecked="Kuerzen_Changed"/>
+                <Grid x:Name="grdKuerzen" IsEnabled="False">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Trennzeichen:" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                    <TextBox x:Name="txtTrennzeichen" Grid.Row="0" Grid.Column="1" Text="_" MaxLength="3"
+                             Width="60" HorizontalAlignment="Left" Margin="0,0,0,6" TextChanged="Kuerzen_TextChanged"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Was soll passieren?" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+                        <RadioButton x:Name="rbBehalten" Content="Abschnitte behalten" IsChecked="True"
+                                     Margin="0,0,15,0" Checked="Kuerzen_Changed"/>
+                        <RadioButton x:Name="rbEntfernen" Content="Abschnitte entfernen" Checked="Kuerzen_Changed"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="lblAbschnitte" Grid.Row="2" Grid.Column="0" Text="Wie viele Abschnitte?" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                    <TextBox x:Name="txtAbschnitte" Grid.Row="2" Grid.Column="1" Text="1" MaxLength="2"
+                             Width="60" HorizontalAlignment="Left" Margin="0,0,0,6" TextChanged="Kuerzen_TextChanged"/>
+
+                    <TextBlock x:Name="lblRichtung" Grid.Row="3" Grid.Column="0" Text="Welche Abschnitte?" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+                        <RadioButton x:Name="rbVorwaerts" Content="Vom Anfang" IsChecked="True"
+                                     Margin="0,0,15,0" Checked="Kuerzen_Changed"/>
+                        <RadioButton x:Name="rbRueckwaerts" Content="Vom Ende" Checked="Kuerzen_Changed"/>
+                    </StackPanel>
+
+                    <CheckBox x:Name="chkEndungEntfernen" Grid.Row="4" Grid.Column="1"
+                              Content="Dateiendung vorher entfernen" IsChecked="True"
+                              Checked="Kuerzen_Changed" Unchecked="Kuerzen_Changed"/>
+                </Grid>
+                <TextBlock x:Name="txtKuerzenBeispiel" FontSize="11" Foreground="#FF666666"
+                           TextWrapping="Wrap" Margin="0,8,0,0"/>
+            </StackPanel>
+        </GroupBox>
+
         <!-- Encoding -->
-        <GroupBox Header="Zeichenkodierung" Grid.Row="2" Margin="0,0,0,10">
+        <GroupBox Header="Zeichenkodierung" Grid.Row="3" Margin="0,0,0,10">
             <StackPanel Margin="10">
                 <RadioButton x:Name="rbAnsi" Content="ANSI (Windows-1252)" Margin="0,0,0,8" IsChecked="True" Checked="RadioButton_Checked"/>
                 <RadioButton x:Name="rbUtf8" Content="UTF-8 (Unicode)" Checked="RadioButton_Checked"/>
@@ -56,7 +107,7 @@
         </GroupBox>
 
         <!-- Info Bereich -->
-        <Border Grid.Row="3" BorderBrush="#FFD0D0D0" BorderThickness="1" Background="#FFF9F9F9" Padding="10" Margin="0,0,0,15">
+        <Border Grid.Row="4" BorderBrush="#FFD0D0D0" BorderThickness="1" Background="#FFF9F9F9" Padding="10" Margin="0,0,0,15">
             <StackPanel>
                 <TextBlock x:Name="txtInfo" FontWeight="SemiBold" Margin="0,0,0,5"/>
                 <TextBlock x:Name="txtDateiname" FontSize="11" Foreground="#FF666666" TextWrapping="Wrap"/>
@@ -64,10 +115,10 @@
         </Border>
 
         <!-- Spacer -->
-        <Rectangle Grid.Row="4" Fill="Transparent"/>
+        <Rectangle Grid.Row="5" Fill="Transparent"/>
 
         <!-- Buttons -->
-        <Grid Grid.Row="5" Margin="0,0,0,0" VerticalAlignment="Bottom">
+        <Grid Grid.Row="6" Margin="0,0,0,0" VerticalAlignment="Bottom">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

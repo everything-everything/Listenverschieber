@@ -40,6 +40,9 @@ namespace Listenverschieber
         private List<string> verschobeneDateienListe = new List<string>();
         private List<string> nichtGefundeneDateienListe = new List<string>();
 
+        /// <summary>Merkt sich die zuletzt ausgefuehrte Aktion fuer die Beschriftung im Exportdialog.</summary>
+        private ExportListenModus letzterExportModus = ExportListenModus.Verschieben;
+
         // Protokolle
         private readonly List<string> suchProtokoll = new List<string>();
         private readonly List<string> kopierProtokoll = new List<string>();
@@ -727,6 +730,19 @@ namespace Listenverschieber
             int verarbeiteteCount = 0;
             int processed = 0;
 
+            // Exportlisten fuer diesen Lauf zuruecksetzen und Modus merken.
+            await Dispatcher.InvokeAsync(() =>
+            {
+                verschobeneDateienListe.Clear();
+                nichtGefundeneDateienListe.Clear();
+                letzterExportModus = modus switch
+                {
+                    DateiOperationModus.Suchlauf => ExportListenModus.Suchlauf,
+                    DateiOperationModus.Kopieren => ExportListenModus.Kopieren,
+                    _ => ExportListenModus.Verschieben
+                };
+            });
+
             foreach (var gruppe in gruppen)
             {
                 processed++;
@@ -776,10 +792,12 @@ namespace Listenverschieber
                                     AnzeigePfad = ueberwachungspfad
                                 });
                             });
+                            verschobeneDateienListe.Add(fileName);
                             verarbeiteteCount++;
                         }
                         else if (File.Exists(ziel))
                         {
+                            nichtGefundeneDateienListe.Add(fileName);
                             await Dispatcher.InvokeAsync(() =>
                             {
                                 LogMessage2($"Übersprungen (existiert): {fileName}");
@@ -830,11 +848,13 @@ namespace Listenverschieber
                                     });
                                 });
                             }
+                            verschobeneDateienListe.Add(fileName);
                             verarbeiteteCount++;
                         }
                     }
                     catch (Exception ex)
                     {
+                        nichtGefundeneDateienListe.Add(Path.GetFileName(datei));
                         await Dispatcher.InvokeAsync(() => LogMessage2($"FEHLER: {Path.GetFileName(datei)} - {ex.Message}"));
                     }
                 }
@@ -1062,6 +1082,13 @@ namespace Listenverschieber
             verschobeneDateienListe.Clear();
             nichtGefundeneDateienListe.Clear();
 
+            letzterExportModus = modus switch
+            {
+                DateiOperationModus.Suchlauf => ExportListenModus.Suchlauf,
+                DateiOperationModus.Kopieren => ExportListenModus.Kopieren,
+                _ => ExportListenModus.Verschieben
+            };
+
             await Dispatcher.InvokeAsync(() => GefundeneDateien.Clear());
 
             string modusText = modus switch
@@ -1206,6 +1233,7 @@ namespace Listenverschieber
                             {
                                 if (modus == DateiOperationModus.Suchlauf)
                                 {
+                                    verschobeneDateienListe.Add(fileName);
                                     await Dispatcher.InvokeAsync(() =>
                                     {
                                         LogMessage($"[Suchlauf] Gefunden: {fileName}");
@@ -1266,8 +1294,8 @@ namespace Listenverschieber
                                             {
                                                 File.Delete(zielPfad);
                                                 File.Move(quelldatei, zielPfad);
-                                                verschobeneDateienListe.Add(fileName);
                                             }
+                                            verschobeneDateienListe.Add(fileName);
                                             verschoben++;
                                             await Dispatcher.InvokeAsync(() =>
                                             {
@@ -1290,10 +1318,8 @@ namespace Listenverschieber
                                             if (modus == DateiOperationModus.Kopieren)
                                                 File.Copy(quelldatei, neuerZielPfad);
                                             else
-                                            {
                                                 File.Move(quelldatei, neuerZielPfad);
-                                                verschobeneDateienListe.Add(neuerName);
-                                            }
+                                            verschobeneDateienListe.Add(neuerName);
                                             verschoben++;
                                             await Dispatcher.InvokeAsync(() =>
                                             {
@@ -1318,10 +1344,8 @@ namespace Listenverschieber
                                             if (modus == DateiOperationModus.Kopieren)
                                                 File.Copy(quelldatei, zielPfad);
                                             else
-                                            {
                                                 File.Move(quelldatei, zielPfad);
-                                                verschobeneDateienListe.Add(fileName);
-                                            }
+                                            verschobeneDateienListe.Add(fileName);
                                             verschoben++;
                                             await Dispatcher.InvokeAsync(() =>
                                             {
@@ -1344,6 +1368,7 @@ namespace Listenverschieber
                                     if (modus == DateiOperationModus.Kopieren)
                                     {
                                         File.Copy(quelldatei, zielPfad);
+                                        verschobeneDateienListe.Add(fileName);
                                         await Dispatcher.InvokeAsync(() =>
                                         {
                                             LogMessage($"Kopiert: {fileName}");
@@ -1421,7 +1446,7 @@ namespace Listenverschieber
         #region Menü
         private void MenuExport_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new ExportDialog(verschobeneDateienListe.Count, nichtGefundeneDateienListe.Count) { Owner = this };
+            var dialog = new ExportDialog(verschobeneDateienListe.Count, nichtGefundeneDateienListe.Count, letzterExportModus) { Owner = this };
             if (dialog.ShowDialog() == true)
             {
                 var encoding = dialog.ExportAlsUtf8 ? Encoding.UTF8 : Encoding.GetEncoding(1252);
@@ -1442,8 +1467,32 @@ namespace Listenverschieber
                     return;
                 }
 
-                var liste = dialog.ExportVerschobene ? verschobeneDateienListe : nichtGefundeneDateienListe;
-                string beschreibung = dialog.ExportVerschobene ? "Verschobene_Dateien" : "Nicht_gefundene_Dateien";
+                List<string> quellListe;
+                string bezeichnung;
+                if (dialog.ExportAlle)
+                {
+                    // Treffer und Gegenstueck zusammen, Reihenfolge bleibt erhalten.
+                    quellListe = verschobeneDateienListe.Concat(nichtGefundeneDateienListe).ToList();
+                    bezeichnung = dialog.BezeichnungAlle;
+                }
+                else if (dialog.ExportVerschobene)
+                {
+                    quellListe = verschobeneDateienListe;
+                    bezeichnung = dialog.BezeichnungTreffer;
+                }
+                else
+                {
+                    quellListe = nichtGefundeneDateienListe;
+                    bezeichnung = dialog.BezeichnungGegenteil;
+                }
+
+                string beschreibung = bezeichnung.Replace(' ', '_');
+
+                // Namen ggf. am Trennzeichen kuerzen; Duplikate bleiben erhalten.
+                var liste = dialog.Kuerzen.Aktiv
+                    ? quellListe.Select(dialog.Kuerzen.Anwenden).ToList()
+                    : quellListe;
+
                 string extension = dialog.ExportAlsCsv ? "csv" : "txt";
                 if (dialog.ExportAlsCsv)
                     ExportListeAlsCsv(liste, beschreibung, encoding);

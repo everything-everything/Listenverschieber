@@ -45,6 +45,7 @@ namespace Listenverschieber
             TabUmbenennen(),
             TabInhaltssuche(),
             Dateiformate(),
+            Exportieren(),
             Konfiguration(),
             Problembehandlung()
         };
@@ -261,6 +262,32 @@ namespace Listenverschieber
                 "• XLSX - Excel-Arbeitsmappen über DocumentFormat.OpenXml.",
                 "## Nicht unterstützt",
                 "Gescannte PDF-Dateien ohne Texterkennung enthalten nur Bilddaten und liefern keinen durchsuchbaren Text. Hierfür wäre eine vorgelagerte OCR-Verarbeitung nötig. Ebenso werden die alten Formate DOC und XLS sowie passwortgeschützte Dateien nicht gelesen."
+            }
+        };
+
+        private static HilfeThema Exportieren() => new()
+        {
+            Titel = "Listen exportieren",
+            Absaetze = new[]
+            {
+                "Über 'Datei > Exportieren' lassen sich die Ergebnisse eines Laufs als Textdatei oder als CSV sichern.",
+                "## Welche Listen stehen zur Verfügung?",
+                "Es werden immer drei zueinander passende Listen angeboten. Welche das sind, richtet sich nach der zuletzt ausgeführten Aktion:",
+                "• Nach einem Suchlauf: 'Gefundene Dateien', 'Nicht gefundene Dateien' und 'Alle Dateien'.",
+                "• Nach dem Kopieren: 'Kopierte Dateien', 'Nicht kopierte Dateien' und 'Alle Dateien'.",
+                "• Nach dem Verschieben: 'Verschobene Dateien', 'Nicht verschobene Dateien' und 'Alle Dateien'.",
+                "'Alle Dateien' fasst beide Listen zu einer gemeinsamen Ausgabe zusammen.",
+                "Zusätzlich lassen sich das Suchprotokoll, das Kopierprotokoll und das komplette Protokoll ausgeben. Listen ohne Einträge sind ausgegraut.",
+                "## Namen am Trennzeichen kürzen",
+                "Häufig enthalten Dateinamen mehr Angaben als für die Weiterverarbeitung nötig sind. Mit dieser Option wird der Name vor dem Export an einem Trennzeichen zerlegt, und es werden nur die gewünschten Abschnitte übernommen.",
+                "• Trennzeichen: das Zeichen, an dem zerlegt wird, meist der Unterstrich.",
+                "• Abschnitte behalten: wie viele Abschnitte übernommen werden.",
+                "• Richtung: vorwärts zählt vom Anfang des Namens, rückwärts vom Ende. Rückwärts ist praktisch, wenn die Anzahl der vorderen Abschnitte schwankt.",
+                "• Dateiendung vorher entfernen: schneidet die Endung ab, bevor zerlegt wird.",
+                "Ein Beispiel wird im Dialog laufend mitgerechnet, sodass sich die Einstellung sofort überprüfen lässt. Enthält ein Name das Trennzeichen nicht, bleibt er unverändert.",
+                "## Format und Kodierung",
+                "TXT schreibt eine Zeile je Eintrag. CSV ergänzt eine Kopfzeile mit Dateiname und Zeitstempel. Für Protokolle steht nur TXT zur Verfügung; das Kürzen ist dort ebenfalls deaktiviert, da es sich nicht um reine Dateinamen handelt.",
+                "Als Kodierung stehen ANSI (Windows-1252) und UTF-8 zur Wahl. ANSI passt zu älteren Programmen, UTF-8 gibt Umlaute und Sonderzeichen zuverlässig wieder."
             }
         };
 

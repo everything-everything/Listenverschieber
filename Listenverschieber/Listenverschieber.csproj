@@ -9,9 +9,9 @@
     <UseWindowsForms>true</UseWindowsForms>
 
     <!-- Angaben, die in den Dateieigenschaften der EXE erscheinen -->
-    <Version>3.11.0</Version>
-    <AssemblyVersion>3.11.0.0</AssemblyVersion>
-    <FileVersion>3.11.0.0</FileVersion>
+    <Version>3.11.1</Version>
+    <AssemblyVersion>3.11.1.0</AssemblyVersion>
+    <FileVersion>3.11.1.0</FileVersion>
     <Product>Listenverschieber</Product>
     <AssemblyTitle>Listenverschieber</AssemblyTitle>
     <Description>Werkzeug zum Sortieren, Verschieben, Umbenennen und Durchsuchen großer Dateibestände.</Description>
