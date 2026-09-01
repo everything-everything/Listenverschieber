@@ -40,12 +40,14 @@ if (-not $Version) {
 $kurz = ($Version -split '\.')[0..1] -join '.'
 
 $zielWurzel = Join-Path $wurzel $AusgabeOrdner
-$tempWurzel = Join-Path $wurzel 'publish'
+# Eindeutiger Arbeitsordner, damit Reste eines vorherigen Laufs nicht stoeren
+$tempWurzel = Join-Path $wurzel ('publish\{0}' -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
 
 Write-Host "Listenverschieber $kurz wird veroeffentlicht..." -ForegroundColor Cyan
 Write-Host ''
 
-Remove-Item $zielWurzel, $tempWurzel -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $zielWurzel -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $wurzel 'publish') -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $zielWurzel -Force | Out-Null
 
 # Zu erstellende Pakete:
@@ -82,26 +84,62 @@ foreach ($v in $varianten) {
     # Debug-Symbole gehoeren nicht ins Auslieferungspaket
     Remove-Item (Join-Path $ordner '*.pdb') -Force -ErrorAction SilentlyContinue
 
-    # Erweiterungen in eigene Unterordner einsortieren.
+    # Ordnerstruktur aufraeumen:
+    #   Hauptverzeichnis  EXE, Startdateien und der .NET-Host
+    #   Runtime\          die .NET-Laufzeit
+    #   Erweiterungen\    die NuGet-Bibliotheken (PdfPig, OpenXml, ...)
     #
-    # Hinweis: Die EXE sucht ihren .NET-Host (hostfxr, hostpolicy, coreclr,
-    # clrjit, System.Private.CoreLib) fest im eigenen Verzeichnis. Diese
-    # Dateien bleiben deshalb oben liegen. Die NuGet-Bibliotheken werden zur
-    # Laufzeit von ErweiterungsLader.cs aus "Erweiterungen" nachgeladen.
-    $erweiterungen = @(
-        @{ Paket = 'PdfPig';    Muster = 'UglyToad.PdfPig*.dll' }
-        @{ Paket = 'OpenXml';   Muster = 'DocumentFormat.OpenXml*.dll' }
-        @{ Paket = 'Kodierung'; Muster = 'System.Text.Encoding.CodePages.dll' }
+    # Der Host findet die ausgelagerten Dateien ueber "additionalProbingPaths"
+    # in der runtimeconfig.json. Dort erwartet er die uebliche NuGet-Ablage
+    # <Probing-Pfad>\<Paketname>\<Version>\<Pfad aus der deps.json>.
+    #
+    # Diese fuenf Dateien muessen neben der EXE bleiben: Das Startprogramm
+    # sucht hostfxr.dll fest im eigenen Verzeichnis, daran haengt der Rest des
+    # Laufzeitkerns. Sie lassen sich nicht per Konfiguration umleiten.
+    $hostKern = @(
+        'hostfxr.dll', 'hostpolicy.dll', 'coreclr.dll',
+        'clrjit.dll', 'System.Private.CoreLib.dll'
     )
 
-    foreach ($e in $erweiterungen) {
-        $treffer = @(Get-ChildItem (Join-Path $ordner $e.Muster) -File -ErrorAction SilentlyContinue)
-        if ($treffer.Count -eq 0) { continue }
+    $abhaengigkeiten = Join-Path $ordner 'Listenverschieber.deps.json'
+    $deps = Get-Content $abhaengigkeiten -Raw | ConvertFrom-Json
+    $ziele = $deps.targets.PSObject.Properties |
+             Where-Object { $_.Name -like '*/*' } |
+             Select-Object -First 1
 
-        $unterordner = Join-Path $ordner "Erweiterungen\$($e.Paket)"
-        New-Item -ItemType Directory -Path $unterordner -Force | Out-Null
-        $treffer | Move-Item -Destination $unterordner -Force
+    foreach ($paket in $ziele.Value.PSObject.Properties) {
+        # Das Programm selbst bleibt im Hauptverzeichnis
+        if ($paket.Name -like 'Listenverschieber/*') { continue }
+
+        # Die Laufzeitpakete kommen nach "Runtime", alles andere nach "Erweiterungen"
+        $bereich = if ($paket.Name -like 'runtimepack.*') { 'Runtime' } else { 'Erweiterungen' }
+        $teile   = $paket.Name -split '/'
+        $basis   = Join-Path $ordner "$bereich\$($teile[0])\$($teile[1])"
+
+        foreach ($abschnitt in @('runtime', 'native')) {
+            $eintraege = $paket.Value.$abschnitt
+            if (-not $eintraege) { continue }
+
+            foreach ($relativ in $eintraege.PSObject.Properties.Name) {
+                $datei = Split-Path $relativ -Leaf
+                if ($hostKern -contains $datei) { continue }
+
+                $quelle = Join-Path $ordner $datei
+                if (-not (Test-Path $quelle)) { continue }
+
+                $ziel = Join-Path $basis ($relativ -replace '/', '\')
+                New-Item -ItemType Directory -Path (Split-Path $ziel) -Force | Out-Null
+                Move-Item $quelle $ziel -Force
+            }
+        }
     }
+
+    # Suchpfade eintragen, damit der Host die ausgelagerten Dateien findet
+    $startKonfig = Join-Path $ordner 'Listenverschieber.runtimeconfig.json'
+    $konfig = Get-Content $startKonfig -Raw | ConvertFrom-Json
+    $konfig.runtimeOptions | Add-Member -NotePropertyName 'additionalProbingPaths' `
+                                        -NotePropertyValue @('Runtime', 'Erweiterungen') -Force
+    $konfig | ConvertTo-Json -Depth 20 | Set-Content $startKonfig -Encoding UTF8
 
     # Die Dateien liegen im ZIP in einem Unterordner, damit sie sich beim
     # Entpacken nicht ueber ein bestehendes Verzeichnis verteilen.
