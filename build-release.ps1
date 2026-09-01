@@ -82,12 +82,33 @@ foreach ($v in $varianten) {
     # Debug-Symbole gehoeren nicht ins Auslieferungspaket
     Remove-Item (Join-Path $ordner '*.pdb') -Force -ErrorAction SilentlyContinue
 
+    # Erweiterungen in eigene Unterordner einsortieren.
+    #
+    # Hinweis: Die EXE sucht ihren .NET-Host (hostfxr, hostpolicy, coreclr,
+    # clrjit, System.Private.CoreLib) fest im eigenen Verzeichnis. Diese
+    # Dateien bleiben deshalb oben liegen. Die NuGet-Bibliotheken werden zur
+    # Laufzeit von ErweiterungsLader.cs aus "Erweiterungen" nachgeladen.
+    $erweiterungen = @(
+        @{ Paket = 'PdfPig';    Muster = 'UglyToad.PdfPig*.dll' }
+        @{ Paket = 'OpenXml';   Muster = 'DocumentFormat.OpenXml*.dll' }
+        @{ Paket = 'Kodierung'; Muster = 'System.Text.Encoding.CodePages.dll' }
+    )
+
+    foreach ($e in $erweiterungen) {
+        $treffer = @(Get-ChildItem (Join-Path $ordner $e.Muster) -File -ErrorAction SilentlyContinue)
+        if ($treffer.Count -eq 0) { continue }
+
+        $unterordner = Join-Path $ordner "Erweiterungen\$($e.Paket)"
+        New-Item -ItemType Directory -Path $unterordner -Force | Out-Null
+        $treffer | Move-Item -Destination $unterordner -Force
+    }
+
     # Die Dateien liegen im ZIP in einem Unterordner, damit sie sich beim
     # Entpacken nicht ueber ein bestehendes Verzeichnis verteilen.
     $zip = Join-Path $zielWurzel "$paketName.zip"
     Compress-Archive -Path $ordner -DestinationPath $zip -Force
 
-    $dateien = @(Get-ChildItem $ordner -File)
+    $dateien = @(Get-ChildItem $ordner -File -Recurse)
     $ergebnis += [pscustomobject]@{
         Paket       = Split-Path $zip -Leaf
         Dateien     = $dateien.Count
