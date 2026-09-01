@@ -12,6 +12,8 @@
     <Version>3.11.1</Version>
     <AssemblyVersion>3.11.1.0</AssemblyVersion>
     <FileVersion>3.11.1.0</FileVersion>
+    <!-- Frei waehlbare Anzeigeversion, erlaubt auch Buchstaben wie "3.11a" -->
+    <InformationalVersion>3.11a</InformationalVersion>
     <Product>Listenverschieber</Product>
     <AssemblyTitle>Listenverschieber</AssemblyTitle>
     <Description>Werkzeug zum Sortieren, Verschieben, Umbenennen und Durchsuchen großer Dateibestände.</Description>

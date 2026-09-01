@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Listenverschieber
 {
     /// <summary>
@@ -10,13 +12,28 @@ namespace Listenverschieber
 
         /// <summary>
         /// Anzeigeversion. Wird aus der Assembly gelesen, damit nur die
-        /// Projektdatei (Listenverschieber.csproj, Element &lt;Version&gt;) gepflegt werden muss.
+        /// Projektdatei (Listenverschieber.csproj) gepflegt werden muss.
+        /// Bevorzugt wird &lt;InformationalVersion&gt;, weil dort auch
+        /// Bezeichnungen wie "3.11a" moeglich sind.
         /// </summary>
         public static string Version
         {
             get
             {
-                var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+
+                var anzeige = assembly
+                    .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?
+                    .InformationalVersion;
+
+                if (!string.IsNullOrWhiteSpace(anzeige))
+                {
+                    // Der Compiler haengt teilweise "+<Commit>" an - das gehoert nicht in die Anzeige.
+                    int plus = anzeige.IndexOf('+');
+                    return plus > 0 ? anzeige[..plus] : anzeige;
+                }
+
+                var v = assembly.GetName().Version;
                 return v == null ? "3.11" : $"{v.Major}.{v.Minor:00}";
             }
         }
