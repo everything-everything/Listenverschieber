@@ -22,12 +22,16 @@ namespace Listenverschieber
                 if (File.Exists(dateipfad))
                 {
                     // Öffne Explorer und markiere die Datei
-                    Process.Start("explorer.exe", $"/select,\"{dateipfad}\"");
+                    var start = new ProcessStartInfo("explorer.exe");
+                    start.ArgumentList.Add("/select," + dateipfad);
+                    Process.Start(start);
                 }
                 else if (Directory.Exists(dateipfad))
                 {
                     // Öffne das Verzeichnis
-                    Process.Start("explorer.exe", $"\"{dateipfad}\"");
+                    var start = new ProcessStartInfo("explorer.exe");
+                    start.ArgumentList.Add(dateipfad);
+                    Process.Start(start);
                 }
                 else
                 {
@@ -35,7 +39,9 @@ namespace Listenverschieber
                     string? verzeichnis = Path.GetDirectoryName(dateipfad);
                     if (!string.IsNullOrEmpty(verzeichnis) && Directory.Exists(verzeichnis))
                     {
-                        Process.Start("explorer.exe", $"\"{verzeichnis}\"");
+                        var start = new ProcessStartInfo("explorer.exe");
+                        start.ArgumentList.Add(verzeichnis);
+                        Process.Start(start);
                     }
                 }
             }

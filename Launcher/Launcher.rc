@@ -1,0 +1,46 @@
+// Versionsangaben fuer das Startprogramm.
+//
+// Eine EXE ohne solche Angaben wirkt auf Virenscanner verdaechtig. Da der
+// Launcher ohnehin nur ein anderes Programm startet - ein Muster, das
+// Schadsoftware ebenfalls nutzt - sind Herkunftsangaben hier wichtig.
+//
+// Der Dateiname lautet bewusst "LV_Start.exe" und nicht wie die Anwendung
+// "Listenverschieber.exe": Eine EXE, die eine gleichnamige EXE aus einem
+// Unterordner startet, sieht nach einer Selbstkopie aus, wie sie
+// Schadsoftware zur Verankerung nutzt. Die Angaben hier muessen zum
+// Dateinamen passen - ein abweichender OriginalFilename waere fuer sich
+// genommen schon ein Verdachtsmerkmal.
+
+#include <windows.h>
+
+#define VER_DATEI       3,11,0,0
+#define VER_DATEI_TEXT  "3.11a"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VER_DATEI
+PRODUCTVERSION  VER_DATEI
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040704b0"
+		BEGIN
+			VALUE "CompanyName",      "Listenverschieber"
+			VALUE "FileDescription",  "Listenverschieber - Startprogramm"
+			VALUE "FileVersion",      VER_DATEI_TEXT
+			VALUE "InternalName",     "LV_Start"
+			VALUE "OriginalFilename", "LV_Start.exe"
+			VALUE "ProductName",      "Listenverschieber"
+			VALUE "ProductVersion",   VER_DATEI_TEXT
+		END
+	END
+
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x407, 1200
+	END
+END

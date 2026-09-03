@@ -366,6 +366,10 @@ FodyWeavers.xsd
 
 ## Fertige Release-Pakete
 release/
+release-test/
+
+## Startprogramme fuer die Virenscanner-Messung
+vt-test/
 
 ## Temporaere Testprojekte (nur zur lokalen Pruefung)
 _endungstest/

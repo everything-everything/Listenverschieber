@@ -93,9 +93,12 @@ namespace Listenverschieber
 
         public static string BerechneHash(string dateiPfad)
         {
-            using var md5 = MD5.Create();
+            // SHA256 statt MD5: MD5 gilt als veraltet und wird von
+            // Sicherheitspruefungen bemaengelt. Fuer den reinen Vergleich
+            // zweier Dateien ist der Aufwand praktisch derselbe.
+            using var sha256 = SHA256.Create();
             using var stream = File.OpenRead(dateiPfad);
-            var hashBytes = md5.ComputeHash(stream);
+            var hashBytes = sha256.ComputeHash(stream);
             return Convert.ToHexString(hashBytes);
         }
 

@@ -37,6 +37,15 @@ namespace Listenverschieber
         {
             try
             {
+                // Nur echte Web-Adressen oeffnen. Ohne diese Pruefung wuerde
+                // jedes Schema an die Shell weitergereicht (z. B. file: oder
+                // ein beliebiges registriertes Programm) - ein Muster, das
+                // Sicherheitspruefungen zu Recht bemaengeln.
+                if (e.Uri.Scheme != Uri.UriSchemeHttp && e.Uri.Scheme != Uri.UriSchemeHttps)
+                {
+                    return;
+                }
+
                 Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
             }
             catch (Exception ex)

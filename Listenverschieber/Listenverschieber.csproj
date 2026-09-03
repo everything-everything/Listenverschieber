@@ -9,11 +9,11 @@
     <UseWindowsForms>true</UseWindowsForms>
 
     <!-- Angaben, die in den Dateieigenschaften der EXE erscheinen -->
-    <Version>3.11.1</Version>
-    <AssemblyVersion>3.11.1.0</AssemblyVersion>
-    <FileVersion>3.11.1.0</FileVersion>
+    <Version>3.11.3</Version>
+    <AssemblyVersion>3.11.3.0</AssemblyVersion>
+    <FileVersion>3.11.3.0</FileVersion>
     <!-- Frei waehlbare Anzeigeversion, erlaubt auch Buchstaben wie "3.11a" -->
-    <InformationalVersion>3.11a</InformationalVersion>
+    <InformationalVersion>3.11c</InformationalVersion>
     <Product>Listenverschieber</Product>
     <AssemblyTitle>Listenverschieber</AssemblyTitle>
     <Description>Werkzeug zum Sortieren, Verschieben, Umbenennen und Durchsuchen großer Dateibestände.</Description>
@@ -26,6 +26,21 @@
     <!-- Für die Veröffentlichung als eigenständige EXE -->
     <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
     <SatelliteResourceLanguages>de;en</SatelliteResourceLanguages>
+
+    <!--
+      Reproduzierbare Erstellung: Aus demselben Quellstand entstehen
+      byte-identische Dateien. Wer den Quellcode selbst uebersetzt, erhaelt
+      also exakt dieselben Pruefsummen wie in SHA256SUMS.txt und kann so
+      nachweisen, dass den Paketen nichts hinzugefuegt wurde.
+
+      Deterministic entfernt wechselnde Angaben wie den Erstellungszeitpunkt.
+      ContinuousIntegrationBuild ersetzt zusaetzlich die lokalen Dateipfade
+      durch neutrale Angaben - sonst haengt das Ergebnis vom Ordner ab, in
+      dem gebaut wurde.
+    -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
   </PropertyGroup>
 
   <ItemGroup>
