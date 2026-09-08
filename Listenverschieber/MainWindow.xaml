@@ -590,6 +590,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -612,12 +613,27 @@
                                                  ToolTip="Der gefundene Wert wird ohne Umwandlung in den Abschnitt eingesetzt - z.B. Kundennummer, Filiale, Belegnummer."/>
                                 </StackPanel>
 
-                                <RadioButton x:Name="rbUmbAbschnittAuto" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" GroupName="UmbAbschnitt"
+                                <!-- Woher kommt der Wert: aus der Datei gelesen oder fest eingetippt -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
+                                    <TextBlock Text="Wert:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <RadioButton x:Name="rbUmbWertAusDatei" GroupName="UmbWertHerkunft" Content="aus der Datei lesen" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                 Checked="rbUmbWertHerkunft_Changed"
+                                                 ToolTip="Der Wert wird über den Suchbegriff aus dem Dateiinhalt gelesen."/>
+                                    <RadioButton x:Name="rbUmbWertFest" GroupName="UmbWertHerkunft" Content="fest vorgeben:" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                 Checked="rbUmbWertHerkunft_Changed"
+                                                 ToolTip="Setzt bei allen Dateigruppen denselben Wert ein. Der Dateiinhalt wird dann nicht durchsucht."/>
+                                    <TextBox x:Name="txtUmbFesterWert" Width="150" VerticalContentAlignment="Center" IsEnabled="False"
+                                             ToolTip="Der Wert, der eingesetzt wird. Bei Abschnittstyp 'Datum' im Format des Feldes 'Format im Inhalt', z.B. 22.01.2026."/>
+                                    <TextBlock x:Name="lblUmbFesterWertHinweis" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="Gray" FontSize="11"
+                                               Text="gilt für alle Dateigruppen" Visibility="Collapsed"/>
+                                </StackPanel>
+
+                                <RadioButton x:Name="rbUmbAbschnittAuto" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" GroupName="UmbAbschnitt"
                                              Content="Abschnitt automatisch finden"
                                              IsChecked="True" Margin="0,0,0,3" Checked="rbUmbAbschnitt_Changed"
                                              ToolTip="Sucht den ersten Abschnitt, der zum Dateinamen-Format bzw. zum Suchmuster passt."/>
 
-                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="20,0,0,6">
+                                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="20,0,0,6">
                                     <TextBlock x:Name="lblUmbAutoMuster" Text="Der Abschnitt besteht aus:" VerticalAlignment="Center" Margin="0,0,8,0" IsEnabled="False"/>
                                     <ComboBox x:Name="cmbUmbAutoMusterTyp" Width="230" VerticalContentAlignment="Center" IsEnabled="False"
                                               SelectedIndex="0" SelectionChanged="cmbUmbAutoMusterTyp_SelectionChanged">
@@ -638,7 +654,7 @@
                                              ToolTip="Regulärer Ausdruck für den zu ersetzenden Abschnitt."/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,8">
+                                <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,8">
                                     <RadioButton x:Name="rbUmbAbschnittFest" GroupName="UmbAbschnitt" Content="Fester Abschnitt Nr.:" VerticalAlignment="Center" Checked="rbUmbAbschnitt_Changed"/>
                                     <TextBox x:Name="txtUmbAbschnittNummer" Text="4" Width="50" Margin="8,0,12,0" VerticalContentAlignment="Center"
                                              IsEnabled="False"
@@ -649,19 +665,19 @@
                                                  ToolTip="Abschnitte werden von hinten gezählt: Abschnitt 1 ist der letzte Abschnitt."/>
                                 </StackPanel>
 
-                                <TextBlock x:Name="lblUmbQuellFormatInhalt" Grid.Row="4" Grid.Column="0" Text="Format im Inhalt:" VerticalAlignment="Center" Margin="0,0,8,5"/>
-                                <TextBox x:Name="txtUmbQuellFormatInhalt" Grid.Row="4" Grid.Column="1" Text="dd.MM.yyyy" Margin="0,0,15,5" VerticalContentAlignment="Center"
+                                <TextBlock x:Name="lblUmbQuellFormatInhalt" Grid.Row="5" Grid.Column="0" Text="Format im Inhalt:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <TextBox x:Name="txtUmbQuellFormatInhalt" Grid.Row="5" Grid.Column="1" Text="dd.MM.yyyy" Margin="0,0,15,5" VerticalContentAlignment="Center"
                                          ToolTip=".NET-Datumsmuster des Werts in der Datei, z.B. dd.MM.yyyy für 01.04.2025"/>
 
-                                <TextBlock x:Name="lblUmbQuellFormatDateiname" Grid.Row="4" Grid.Column="2" Text="Format im Dateinamen:" VerticalAlignment="Center" Margin="0,0,8,5"/>
-                                <TextBox x:Name="txtUmbQuellFormatDateiname" Grid.Row="4" Grid.Column="3" Text="yyyyMMdd" Margin="0,0,0,5" VerticalContentAlignment="Center"
+                                <TextBlock x:Name="lblUmbQuellFormatDateiname" Grid.Row="5" Grid.Column="2" Text="Format im Dateinamen:" VerticalAlignment="Center" Margin="0,0,8,5"/>
+                                <TextBox x:Name="txtUmbQuellFormatDateiname" Grid.Row="5" Grid.Column="3" Text="yyyyMMdd" Margin="0,0,0,5" VerticalContentAlignment="Center"
                                          ToolTip=".NET-Datumsmuster des vorhandenen Abschnitts, z.B. yyyyMMdd für 20261112"/>
 
-                                <TextBlock x:Name="lblUmbZielFormat" Grid.Row="5" Grid.Column="0" Text="Zielformat:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBox x:Name="txtUmbZielFormatDateiname" Grid.Row="5" Grid.Column="1" Text="yyyyMMdd" Margin="0,0,15,0" VerticalContentAlignment="Center"
+                                <TextBlock x:Name="lblUmbZielFormat" Grid.Row="6" Grid.Column="0" Text="Zielformat:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="txtUmbZielFormatDateiname" Grid.Row="6" Grid.Column="1" Text="yyyyMMdd" Margin="0,0,15,0" VerticalContentAlignment="Center"
                                          ToolTip="So wird der neue Abschnitt geschrieben, z.B. yyyyMMdd ergibt 20250401"/>
 
-                                <CheckBox x:Name="chkUmbGleichnamige" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"
+                                <CheckBox x:Name="chkUmbGleichnamige" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"
                                           Content="Alle gleichnamigen Dateien mitumbenennen" IsChecked="True"
                                           ToolTip="Benennt alle Dateien mit gleichem Namen ohne Endung mit um (z.B. .pdf, .txt, .ini)"/>
                             </Grid>

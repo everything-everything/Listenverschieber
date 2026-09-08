@@ -81,9 +81,62 @@ namespace Listenverschieber
             using var dokument = PdfDocument.Open(dateiPfad);
             foreach (var seite in dokument.GetPages())
             {
-                sb.AppendLine(seite.Text);
+                foreach (var zeile in ZeilenAusWoertern(seite))
+                {
+                    sb.AppendLine(zeile);
+                }
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Setzt den Seitentext zeilenweise zusammen.
+        ///
+        /// Eine PDF-Seite kennt keine Zeilen, sondern nur Zeichen mit Position.
+        /// Seite.Text liefert deshalb alles ohne Umbruch aneinandergehaengt, was
+        /// aus "Datum=22.01.2026" und der Folgezeile "Belegnummer=..." den Wert
+        /// "22.01.2026Belegnummer=..." macht. Darum werden die Woerter hier
+        /// anhand ihrer Grundlinie zu Zeilen gruppiert.
+        /// </summary>
+        private static IEnumerable<string> ZeilenAusWoertern(UglyToad.PdfPig.Content.Page seite)
+        {
+            // Toleranz, damit leicht versetzte Zeichen derselben Zeile zusammenbleiben.
+            const double zeilenToleranz = 3.0;
+
+            var woerter = seite.GetWords()
+                .Where(w => !string.IsNullOrWhiteSpace(w.Text))
+                .ToList();
+
+            if (woerter.Count == 0)
+            {
+                // Ohne erkennbare Woerter bleibt nur der Rohtext.
+                yield return seite.Text;
+                yield break;
+            }
+
+            var zeilen = new List<(double Grundlinie, List<UglyToad.PdfPig.Content.Word> Woerter)>();
+
+            foreach (var wort in woerter.OrderByDescending(w => w.BoundingBox.Bottom))
+            {
+                double unten = wort.BoundingBox.Bottom;
+                var zeile = zeilen.FirstOrDefault(z => Math.Abs(z.Grundlinie - unten) <= zeilenToleranz);
+
+                if (zeile.Woerter == null)
+                {
+                    zeilen.Add((unten, new List<UglyToad.PdfPig.Content.Word> { wort }));
+                }
+                else
+                {
+                    zeile.Woerter.Add(wort);
+                }
+            }
+
+            foreach (var zeile in zeilen)
+            {
+                yield return string.Join(" ", zeile.Woerter
+                    .OrderBy(w => w.BoundingBox.Left)
+                    .Select(w => w.Text));
+            }
         }
 
         private static string LiesWord(string dateiPfad)

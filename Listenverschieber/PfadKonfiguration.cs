@@ -58,6 +58,8 @@ namespace Listenverschieber
         public int UmbMusterTyp { get; set; } = 0;
         public int UmbMusterLaenge { get; set; } = 0;
         public bool UmbGleichnamigeMitumbenennen { get; set; } = true;
+        public bool UmbWertFestVorgeben { get; set; } = false;
+        public string UmbFesterWert { get; set; } = "";
 
         // Tab 4 - Inhaltssuche
         public string InhSuchpfad { get; set; } = "";

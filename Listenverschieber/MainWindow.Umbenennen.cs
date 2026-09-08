@@ -106,6 +106,11 @@ namespace Listenverschieber
             UmbFelderAktualisieren();
         }
 
+        private void rbUmbWertHerkunft_Changed(object sender, RoutedEventArgs e)
+        {
+            UmbFelderAktualisieren();
+        }
+
         private void cmbUmbAutoMusterTyp_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UmbFelderAktualisieren();
@@ -124,6 +129,13 @@ namespace Listenverschieber
 
             bool fest = rbUmbAbschnittFest.IsChecked == true;
             bool alsDatum = rbUmbWertDatum.IsChecked == true;
+            bool festerWert = rbUmbWertFest.IsChecked == true;
+
+            // Fester Wert: Eingabefeld freischalten, Suchbegriff/Quellendungen entfallen
+            txtUmbFesterWert.IsEnabled = festerWert;
+            lblUmbFesterWertHinweis.Visibility = festerWert ? Visibility.Visible : Visibility.Collapsed;
+            txtUmbSuchschluessel.IsEnabled = !festerWert;
+            cmbUmbQuelldateiEndungen.IsEnabled = !festerWert;
 
             txtUmbAbschnittNummer.IsEnabled = fest;
             rbUmbRichtungVorwaerts.IsEnabled = fest;
@@ -180,10 +192,20 @@ namespace Listenverschieber
                 AlsDatumFormatieren = rbUmbWertDatum.IsChecked == true,
                 AutoMuster = txtUmbAutoMuster.Text.Trim(),
                 MusterTyp = (AbschnittMusterTyp)Math.Max(0, cmbUmbAutoMusterTyp.SelectedIndex),
-                MusterLaenge = int.TryParse(txtUmbAutoLaenge.Text.Trim(), out int laenge) && laenge > 0 ? laenge : 0
+                MusterLaenge = int.TryParse(txtUmbAutoLaenge.Text.Trim(), out int laenge) && laenge > 0 ? laenge : 0,
+                WertFestVorgeben = rbUmbWertFest.IsChecked == true,
+                FesterWert = txtUmbFesterWert.Text.Trim()
             };
 
-            if (string.IsNullOrWhiteSpace(optionen.Suchschluessel))
+            if (optionen.WertFestVorgeben)
+            {
+                if (string.IsNullOrWhiteSpace(optionen.FesterWert))
+                {
+                    MessageBox.Show("Bitte den festen Wert eingeben, der eingesetzt werden soll.", "Hinweis", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return null;
+                }
+            }
+            else if (string.IsNullOrWhiteSpace(optionen.Suchschluessel))
             {
                 MessageBox.Show("Bitte einen Suchbegriff angeben (z.B. 'Datum=').", "Hinweis", MessageBoxButton.OK, MessageBoxImage.Information);
                 return null;
@@ -328,45 +350,57 @@ namespace Listenverschieber
                 AnzeigePfad = ordner
             };
 
-            // Nur Dateien der konfigurierten Endungen als Informationsquelle nutzen
-            var quellKandidaten = dateien
-                .Where(f => EndungsAuswahl.Passt(f, endungen))
-                .OrderBy(f => Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            string? wert;
 
-            if (quellKandidaten.Count == 0)
+            if (optionen.WertFestVorgeben)
             {
-                eintrag.Status = "Keine durchsuchbare Quelldatei";
-                return eintrag;
+                // Fester Wert: kein Dateiinhalt noetig, daher wird auch keine
+                // Quelldatei vorausgesetzt. Jede Dateigruppe wird behandelt.
+                wert = optionen.FesterWert;
+                eintrag.Quelldatei = "(fester Wert)";
             }
-
-            string? wert = null;
-            string? letzterFehler = null;
-
-            foreach (var kandidat in quellKandidaten)
+            else
             {
-                var inhalt = DateiInhaltsLeser.LiesText(kandidat, out string? leseFehler);
-                if (inhalt == null)
+                // Nur Dateien der konfigurierten Endungen als Informationsquelle nutzen
+                var quellKandidaten = dateien
+                    .Where(f => EndungsAuswahl.Passt(f, endungen))
+                    .OrderBy(f => Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (quellKandidaten.Count == 0)
                 {
-                    letzterFehler = leseFehler;
-                    continue;
+                    eintrag.Status = "Keine durchsuchbare Quelldatei";
+                    return eintrag;
                 }
 
-                var gefunden = UmbenennungsLogik.WertAusInhalt(inhalt, optionen.Suchschluessel);
-                if (!string.IsNullOrWhiteSpace(gefunden))
+                wert = null;
+                string? letzterFehler = null;
+
+                foreach (var kandidat in quellKandidaten)
                 {
-                    wert = gefunden;
-                    eintrag.Quelldatei = Path.GetFileName(kandidat);
-                    break;
+                    var inhalt = DateiInhaltsLeser.LiesText(kandidat, out string? leseFehler);
+                    if (inhalt == null)
+                    {
+                        letzterFehler = leseFehler;
+                        continue;
+                    }
+
+                    var gefunden = UmbenennungsLogik.WertAusInhalt(inhalt, optionen.Suchschluessel);
+                    if (!string.IsNullOrWhiteSpace(gefunden))
+                    {
+                        wert = gefunden;
+                        eintrag.Quelldatei = Path.GetFileName(kandidat);
+                        break;
+                    }
+
+                    letzterFehler = $"'{optionen.Suchschluessel}' nicht gefunden";
                 }
 
-                letzterFehler = $"'{optionen.Suchschluessel}' nicht gefunden";
-            }
-
-            if (wert == null)
-            {
-                eintrag.Status = letzterFehler ?? $"'{optionen.Suchschluessel}' nicht gefunden";
-                return eintrag;
+                if (wert == null)
+                {
+                    eintrag.Status = letzterFehler ?? $"'{optionen.Suchschluessel}' nicht gefunden";
+                    return eintrag;
+                }
             }
 
             eintrag.GefundenerWert = wert;
@@ -511,6 +545,9 @@ namespace Listenverschieber
             cmbUmbAutoMusterTyp.SelectedIndex = konfiguration.UmbMusterTyp;
             txtUmbAutoLaenge.Text = konfiguration.UmbMusterLaenge > 0 ? konfiguration.UmbMusterLaenge.ToString() : "";
             chkUmbGleichnamige.IsChecked = konfiguration.UmbGleichnamigeMitumbenennen;
+            rbUmbWertFest.IsChecked = konfiguration.UmbWertFestVorgeben;
+            rbUmbWertAusDatei.IsChecked = !konfiguration.UmbWertFestVorgeben;
+            txtUmbFesterWert.Text = konfiguration.UmbFesterWert;
             UmbFelderAktualisieren();
         }
 
@@ -533,6 +570,8 @@ namespace Listenverschieber
             konfiguration.UmbMusterTyp = Math.Max(0, cmbUmbAutoMusterTyp.SelectedIndex);
             konfiguration.UmbMusterLaenge = int.TryParse(txtUmbAutoLaenge.Text.Trim(), out int musterLaenge) && musterLaenge > 0 ? musterLaenge : 0;
             konfiguration.UmbGleichnamigeMitumbenennen = chkUmbGleichnamige.IsChecked == true;
+            konfiguration.UmbWertFestVorgeben = rbUmbWertFest.IsChecked == true;
+            konfiguration.UmbFesterWert = txtUmbFesterWert.Text;
         }
 
         #endregion

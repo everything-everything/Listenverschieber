@@ -58,6 +58,15 @@ namespace Listenverschieber
         public int MusterLaenge { get; set; } = 0;
 
         /// <summary>
+        /// true = der Wert wird nicht aus der Datei gelesen, sondern fest vorgegeben.
+        /// Dann wird kein Dateiinhalt durchsucht und jede Dateigruppe umbenannt.
+        /// </summary>
+        public bool WertFestVorgeben { get; set; } = false;
+
+        /// <summary>Der fest vorgegebene Wert, wenn WertFestVorgeben gesetzt ist.</summary>
+        public string FesterWert { get; set; } = "";
+
+        /// <summary>
         /// Baut aus MusterTyp und MusterLaenge den passenden regulären Ausdruck.
         /// </summary>
         public string EffektivesMuster()
@@ -141,10 +150,15 @@ namespace Listenverschieber
                 schluessel = schluessel[..^1].Trim();
             }
 
+            // Der Wert endet am Zeilenende, am Semikolon - oder sobald ein
+            // weiterer Schluessel beginnt. Letzteres fangen PDF-Inhalte ab, in
+            // denen mehrere Angaben ohne Umbruch aneinanderhaengen, etwa
+            // "Datum=22.01.2026Belegnummer=01234567890-00".
             string muster = Regex.Escape(schluessel)
                              + @"\s*"
                              + (trenner.Length > 0 ? Regex.Escape(trenner) : "[:=]")
-                             + @"\s*(?<wert>[^\r\n;]+)";
+                             + @"\s*(?<wert>[^\r\n;]+?)"
+                             + @"(?=\s*(?:[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df][A-Za-z0-9\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df ]*\s*[:=])|[\r\n;]|$)";
 
             var treffer = Regex.Match(inhalt, muster, RegexOptions.IgnoreCase);
             if (!treffer.Success)
@@ -169,7 +183,22 @@ namespace Listenverschieber
 
             if (!optionen.AlsDatumFormatieren)
             {
-                return wert.Trim();
+                // Im Textmodus wandert der Wert unveraendert in den Dateinamen.
+                // Anders als im Datumsmodus prueft ihn niemand, darum hier die
+                // Kontrolle auf Zeichen, die Windows im Dateinamen verbietet.
+                string text = wert.Trim();
+
+                var verboten = text.Where(c => Path.GetInvalidFileNameChars().Contains(c))
+                    .Distinct()
+                    .ToArray();
+
+                if (verboten.Length > 0)
+                {
+                    fehler = $"Wert '{Kuerzen(text)}' enthaelt unzulaessige Zeichen: {string.Join(" ", verboten)}";
+                    return null;
+                }
+
+                return text;
             }
 
             var kultur = CultureInfo.InvariantCulture;
@@ -184,6 +213,12 @@ namespace Listenverschieber
 
             return datum.ToString(optionen.ZielFormatDateiname, kultur);
         }
+
+        /// <summary>
+        /// Kuerzt lange Werte fuer Meldungen, damit die Vorschauspalte lesbar bleibt.
+        /// </summary>
+        private static string Kuerzen(string text)
+            => text.Length <= 40 ? text : text[..40] + "...";
 
         /// <summary>
         /// Ersetzt den Ziel-Abschnitt im Dateinamen durch den neuen Wert.
