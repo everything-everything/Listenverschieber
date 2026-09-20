@@ -27,6 +27,9 @@ namespace Listenverschieber
             runGitHub.Text = ProgrammInfo.GitHubProfil;
             linkGitHub.NavigateUri = new Uri(ProgrammInfo.GitHubProfil);
             txtKi.Text = ProgrammInfo.KiHinweis;
+            txtNeuerungen.Text = string.Join(
+                Environment.NewLine,
+                ProgrammInfo.Neuerungen.Select(n => $"\u2022 {n}"));
             txtLizenz.Text = $"{ProgrammInfo.Lizenz}\n\n{ProgrammInfo.LizenzKurz}";
             txtFremdlizenzen.Text = string.Join(
                 Environment.NewLine,
@@ -62,6 +65,12 @@ namespace Listenverschieber
             sb.AppendLine($"{ProgrammInfo.Name} - Version {ProgrammInfo.Version}");
             sb.AppendLine($"© {ProgrammInfo.CopyrightJahr} {ProgrammInfo.Autor}");
             sb.AppendLine(ProgrammInfo.GitHubProfil);
+            sb.AppendLine();
+            sb.AppendLine("Neu in dieser Version:");
+            foreach (var neuerung in ProgrammInfo.Neuerungen)
+            {
+                sb.AppendLine($"\u2022 {neuerung}");
+            }
             sb.AppendLine();
             sb.AppendLine(ProgrammInfo.KiHinweis);
             sb.AppendLine();

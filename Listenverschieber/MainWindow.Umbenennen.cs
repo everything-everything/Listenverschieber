@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using WinForms = System.Windows.Forms;
@@ -13,6 +14,9 @@ namespace Listenverschieber
     public partial class MainWindow
     {
         private readonly ObservableCollection<UmbenennungsEintrag> umbVorschau = new();
+
+        /// <summary>Abbruchsteuerung fuer den laufenden Umbenennungsvorgang.</summary>
+        private CancellationTokenSource? umbAbbruch;
 
         private void InitUmbenennenTab()
         {
@@ -307,7 +311,8 @@ namespace Listenverschieber
                 string[] alleDateien;
                 try
                 {
-                    alleDateien = Directory.GetFiles(arbeitspfad, "*.*", suchOption);
+                    // "*" statt "*.*" - erfasst zuverlaessig auch Dateien ohne Endung.
+                    alleDateien = Directory.GetFiles(arbeitspfad, "*", suchOption);
                 }
                 catch (Exception ex)
                 {
@@ -315,14 +320,25 @@ namespace Listenverschieber
                     continue;
                 }
 
-                // Dateien nach Ordner + Basisname (ohne Endung) gruppieren
+                // Dateien nach Ordner + Basisname (ohne Endung) gruppieren.
+                // Der Schluessel wird normalisiert (Gross-/Kleinschreibung und
+                // Randleerzeichen ignorieren), damit z. B. "NAME.ini" und "name .PDF"
+                // sicher zur selben Gruppe gehoeren. Die Endungsauswahl spielt hier
+                // bewusst keine Rolle - sie gilt nur fuer das Auslesen des Wertes.
                 var gruppen = alleDateien.GroupBy(
-                    f => (Ordner: Path.GetDirectoryName(f) ?? arbeitspfad, Basis: Path.GetFileNameWithoutExtension(f)));
+                    f => (
+                        Ordner: (Path.GetDirectoryName(f) ?? arbeitspfad).TrimEnd(Path.DirectorySeparatorChar).ToUpperInvariant(),
+                        Basis: Path.GetFileNameWithoutExtension(f).Trim().ToUpperInvariant()));
 
                 foreach (var gruppe in gruppen)
                 {
                     gesamt++;
-                    var eintrag = UmbGruppeAnalysieren(gruppe.Key.Ordner, gruppe.Key.Basis, gruppe.ToList(), endungen, optionen);
+                    var dateienDerGruppe = gruppe.ToList();
+                    var ersteDatei = dateienDerGruppe[0];
+                    string gruppenOrdner = Path.GetDirectoryName(ersteDatei) ?? arbeitspfad;
+                    string gruppenBasis = Path.GetFileNameWithoutExtension(ersteDatei);
+
+                    var eintrag = UmbGruppeAnalysieren(gruppenOrdner, gruppenBasis, dateienDerGruppe, endungen, optionen);
                     umbVorschau.Add(eintrag);
                     if (eintrag.Umbenennbar)
                     {
@@ -422,14 +438,29 @@ namespace Listenverschieber
             eintrag.NeuerBasisName = neuerName;
 
             // Welche Dateien werden mitumbenannt?
-            eintrag.BetroffeneDateien = chkUmbGleichnamige.IsChecked == true
-                ? dateien
-                : dateien.Where(f => Path.GetFileName(f).Equals(eintrag.Quelldatei, StringComparison.OrdinalIgnoreCase)).ToList();
+            // Wichtig: Die Endungsauswahl gilt nur fuer das Auslesen des Wertes,
+            // niemals fuer die Auswahl der umzubenennenden Dateien.
+            if (chkUmbGleichnamige.IsChecked == true || optionen.WertFestVorgeben)
+            {
+                eintrag.BetroffeneDateien = dateien;
+            }
+            else
+            {
+                eintrag.BetroffeneDateien = dateien
+                    .Where(f => Path.GetFileName(f).Equals(eintrag.Quelldatei, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
-            // Kollisionsprüfung
+                if (eintrag.BetroffeneDateien.Count == 0)
+                {
+                    eintrag.BetroffeneDateien = dateien;
+                }
+            }
+
+            // Kollisionsprüfung - Dateien der eigenen Gruppe zaehlen nicht als Kollision
+            var eigeneDateien = new HashSet<string>(dateien, StringComparer.OrdinalIgnoreCase);
             var kollision = eintrag.BetroffeneDateien
                 .Select(f => Path.Combine(ordner, neuerName + Path.GetExtension(f)))
-                .FirstOrDefault(File.Exists);
+                .FirstOrDefault(z => File.Exists(z) && !eigeneDateien.Contains(z));
 
             if (kollision != null)
             {
@@ -446,7 +477,20 @@ namespace Listenverschieber
 
         #region Ausführung
 
-        private void btnUmbAusfuehren_Click(object sender, RoutedEventArgs e)
+        /// <summary>Bricht den laufenden Umbenennungsvorgang nach der aktuellen Gruppe ab.</summary>
+        private void btnUmbAbbrechen_Click(object sender, RoutedEventArgs e)
+        {
+            if (umbAbbruch == null || umbAbbruch.IsCancellationRequested)
+            {
+                return;
+            }
+
+            umbAbbruch.Cancel();
+            btnUmbAbbrechen.IsEnabled = false;
+            UmbLog("Abbruch angefordert - der Vorgang endet nach der aktuellen Dateigruppe.");
+        }
+
+        private async void btnUmbAusfuehren_Click(object sender, RoutedEventArgs e)
         {
             var zuVerarbeiten = umbVorschau.Where(v => v.Umbenennbar).ToList();
             if (zuVerarbeiten.Count == 0)
@@ -468,53 +512,171 @@ namespace Listenverschieber
 
             int erfolgreich = 0;
             int fehlgeschlagen = 0;
+            bool abgebrochen = false;
 
-            foreach (var eintrag in zuVerarbeiten)
+            umbAbbruch?.Dispose();
+            umbAbbruch = new CancellationTokenSource();
+            btnUmbAusfuehren.IsEnabled = false;
+            btnUmbVorschau.IsEnabled = false;
+            btnUmbAbbrechen.IsEnabled = true;
+
+            try
             {
-                bool gruppeOk = true;
-
-                foreach (var datei in eintrag.BetroffeneDateien)
+                int verarbeitet = 0;
+                foreach (var eintrag in zuVerarbeiten)
                 {
-                    string zielPfad = Path.Combine(eintrag.Ordner, eintrag.NeuerBasisName + Path.GetExtension(datei));
-
-                    try
+                    // Abbruch wirkt zwischen zwei Gruppen, damit zusammengehoerende
+                    // Dateien nie nur teilweise umbenannt werden.
+                    if (umbAbbruch.IsCancellationRequested)
                     {
-                        if (File.Exists(zielPfad))
+                        abgebrochen = true;
+                        UmbLog($"=== Abgebrochen nach {verarbeitet} von {zuVerarbeiten.Count} Gruppen ===");
+                        break;
+                    }
+
+                    bool gruppeOk = true;
+
+                    foreach (var datei in eintrag.BetroffeneDateien)
+                    {
+                        string zielPfad = Path.Combine(eintrag.Ordner, eintrag.NeuerBasisName + Path.GetExtension(datei));
+
+                        try
                         {
-                            UmbLog($"ÜBERSPRUNGEN (Ziel existiert): {Path.GetFileName(zielPfad)}");
-                            gruppeOk = false;
-                            continue;
+                            if (File.Exists(zielPfad))
+                            {
+                                UmbLog($"ÜBERSPRUNGEN (Ziel existiert): {Path.GetFileName(zielPfad)}");
+                                gruppeOk = false;
+                                continue;
+                            }
+
+                            File.Move(datei, zielPfad);
+                            UmbLog($"Umbenannt: {Path.GetFileName(datei)} -> {Path.GetFileName(zielPfad)}");
+                            erfolgreich++;
                         }
+                        catch (Exception ex)
+                        {
+                            UmbLog($"FEHLER bei '{Path.GetFileName(datei)}': {ex.Message}");
+                            gruppeOk = false;
+                            fehlgeschlagen++;
+                        }
+                    }
 
-                        File.Move(datei, zielPfad);
-                        UmbLog($"Umbenannt: {Path.GetFileName(datei)} -> {Path.GetFileName(zielPfad)}");
-                        erfolgreich++;
-                    }
-                    catch (Exception ex)
-                    {
-                        UmbLog($"FEHLER bei '{Path.GetFileName(datei)}': {ex.Message}");
-                        gruppeOk = false;
-                        fehlgeschlagen++;
-                    }
+                    eintrag.Umbenennbar = false;
+                    eintrag.Status = gruppeOk ? "Umbenannt" : "Teilweise fehlgeschlagen";
+                    verarbeitet++;
+
+                    // Kurz an die UI abgeben, damit Abbrechen-Klicks ankommen.
+                    await Task.Yield();
                 }
-
-                eintrag.Umbenennbar = false;
-                eintrag.Status = gruppeOk ? "Umbenannt" : "Teilweise fehlgeschlagen";
+            }
+            finally
+            {
+                umbAbbruch.Dispose();
+                umbAbbruch = null;
+                btnUmbAbbrechen.IsEnabled = false;
+                btnUmbVorschau.IsEnabled = true;
             }
 
             dgUmbVorschau.Items.Refresh();
-            btnUmbAusfuehren.IsEnabled = false;
+            btnUmbAusfuehren.IsEnabled = umbVorschau.Any(v => v.Umbenennbar);
 
-            UmbLog($"Fertig: {erfolgreich} Datei(en) umbenannt, {fehlgeschlagen} Fehler.");
-            txtStatus.Text = $"Umbenennen abgeschlossen: {erfolgreich} Datei(en)";
+            string ergebnisText = abgebrochen ? "abgebrochen" : "abgeschlossen";
+            UmbLog($"{(abgebrochen ? "Abgebrochen" : "Fertig")}: {erfolgreich} Datei(en) umbenannt, {fehlgeschlagen} Fehler.");
+            txtStatus.Text = $"Umbenennen {ergebnisText}: {erfolgreich} Datei(en)";
 
             MessageBox.Show($"{erfolgreich} Datei(en) umbenannt.\n{fehlgeschlagen} Fehler.",
-                "Fertig", MessageBoxButton.OK, MessageBoxImage.Information);
+                abgebrochen ? "Abgebrochen" : "Fertig", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion
 
         #region Konfiguration
+
+        /// <summary>
+        /// Exportiert die Umbenennungsliste.
+        ///
+        /// Als Treffer gelten Eintraege, die tatsaechlich umbenannt wurden oder
+        /// dafuer vorgemerkt sind; alles andere bildet die Gegenliste. Exportiert
+        /// wird der neue Basisname, denn danach wird die Datei spaeter gesucht.
+        /// </summary>
+        private void btnUmbExport_Click(object sender, RoutedEventArgs e)
+        {
+            if (umbVorschau.Count == 0)
+            {
+                MessageBox.Show("Es liegt keine Vorschau vor. Bitte zuerst eine Vorschau erstellen.",
+                    "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var umbenannt = new List<string>();
+            var nichtUmbenannt = new List<string>();
+
+            foreach (var eintrag in umbVorschau)
+            {
+                bool erfolgreich = eintrag.Status.StartsWith("Umbenannt", StringComparison.OrdinalIgnoreCase)
+                    || (eintrag.Umbenennbar && !string.IsNullOrEmpty(eintrag.NeuerBasisName));
+
+                if (erfolgreich)
+                {
+                    umbenannt.Add(eintrag.NeuerBasisName);
+                }
+                else
+                {
+                    // Ohne neuen Namen ist nur der urspruengliche Name aussagekraeftig
+                    nichtUmbenannt.Add(eintrag.BasisName);
+                }
+            }
+
+            var dialog = new ExportDialog(umbenannt.Count, nichtUmbenannt.Count,
+                ExportListenModus.Umbenennen) { Owner = this };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            var encoding = dialog.ExportAlsUtf8 ? Encoding.UTF8 : Encoding.GetEncoding(1252);
+
+            if (dialog.ExportSuchprotokoll || dialog.ExportKopierprotokoll || dialog.ExportKomplettesProtokoll)
+            {
+                ExportListe(txtUmbLog.Text.Split('\n').ToList(), "Umbenennen_Protokoll", "txt", encoding);
+                return;
+            }
+
+            List<string> quellListe;
+            string bezeichnung;
+
+            if (dialog.ExportAlle)
+            {
+                quellListe = umbenannt.Concat(nichtUmbenannt).ToList();
+                bezeichnung = dialog.BezeichnungAlle;
+            }
+            else if (dialog.ExportVerschobene)
+            {
+                quellListe = umbenannt;
+                bezeichnung = dialog.BezeichnungTreffer;
+            }
+            else
+            {
+                quellListe = nichtUmbenannt;
+                bezeichnung = dialog.BezeichnungGegenteil;
+            }
+
+            var liste = dialog.Kuerzen.Aktiv
+                ? quellListe.Select(dialog.Kuerzen.Anwenden).ToList()
+                : quellListe;
+
+            string beschreibung = bezeichnung.Replace(' ', '_');
+
+            if (dialog.ExportAlsCsv)
+            {
+                ExportListeAlsCsv(liste, beschreibung, encoding);
+            }
+            else
+            {
+                ExportListe(liste, beschreibung, "txt", encoding);
+            }
+        }
 
         private void UmbKonfigurationLaden(PfadKonfiguration konfiguration)
         {

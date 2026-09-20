@@ -28,6 +28,9 @@
                     </Hyperlink>
                 </TextBlock>
 
+                <TextBlock Text="Neu in dieser Version" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock x:Name="txtNeuerungen" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
                 <TextBlock Text="Mitwirkende KI" FontWeight="Bold" Margin="0,0,0,4"/>
                 <TextBlock x:Name="txtKi" TextWrapping="Wrap" Margin="0,0,0,14"/>
 

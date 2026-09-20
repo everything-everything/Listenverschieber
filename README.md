@@ -1,6 +1,6 @@
 # Listenverschieber
 
-**Version 3.11** · Windows-Werkzeug zum Sortieren, Verschieben, Kopieren, Umbenennen und Durchsuchen großer Dateibestände.
+**Version 4.00.950** · Windows-Werkzeug zum Sortieren, Verschieben, Kopieren, Umbenennen und Durchsuchen großer Dateibestände.
 
 Alle Arbeitsschritte laufen ausschließlich lokal ab — es werden keine Daten übertragen.
 
@@ -27,6 +27,9 @@ Die Anwendung ist in vier Registerkarten gegliedert:
 - **Mehrzeilige Inhaltssuche** mit drei Suchmodi und den Platzhaltern `*` und `?`.
 - **Konfliktbehandlung** beim Verschieben/Kopieren inklusive Hashvergleich zur Prüfung auf identische Dateien.
 - **Asynchrone Verarbeitung** mit Fortschrittsanzeige und jederzeitigem Abbruch.
+- **Abbrechen in allen Langläufern** — Listenverschieber, Unvollständige Dateien und Dateien umbenennen lassen sich laufend stoppen; begonnene Dateigruppen werden sauber zu Ende geführt.
+- **Export direkt aus jeder Registerkarte** — auch Inhaltssuche und Dateien umbenennen bieten einen eigenen Export nach TXT/CSV mit passend benannten Listen.
+- **Nachvollziehbare Trennzeichen-Suche** — die Ergebnisliste zeigt in den Spalten *Gesucht* und *Gefunden*, welcher Namensabschnitt tatsächlich verglichen wurde.
 - **Integrierte Hilfe** (F1) mit Themenfilter und Export des kompletten Handbuchs als Textdatei.
 
 ---

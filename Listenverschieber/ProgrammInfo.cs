@@ -14,7 +14,7 @@ namespace Listenverschieber
         /// Anzeigeversion. Wird aus der Assembly gelesen, damit nur die
         /// Projektdatei (Listenverschieber.csproj) gepflegt werden muss.
         /// Bevorzugt wird &lt;InformationalVersion&gt;, weil dort auch
-        /// Bezeichnungen wie "3.11a" moeglich sind.
+        /// Bezeichnungen wie "4.00.950" moeglich sind.
         /// </summary>
         public static string Version
         {
@@ -34,7 +34,7 @@ namespace Listenverschieber
                 }
 
                 var v = assembly.GetName().Version;
-                return v == null ? "3.11" : $"{v.Major}.{v.Minor:00}";
+                return v == null ? "4.00" : $"{v.Major}.{v.Minor:00}";
             }
         }
 
@@ -59,6 +59,15 @@ namespace Listenverschieber
             "Bei der Entwicklung hat GitHub Copilot (Claude) mitgewirkt - unter anderem " +
             "bei Entwurf, Implementierung und Dokumentation. Konzept, Anforderungen, " +
             "fachliche Vorgaben und Prüfung der Ergebnisse stammen vom Autor.";
+
+        /// <summary>Wesentliche Neuerungen der aktuellen Version, Anzeige im Info-Fenster.</summary>
+        public static readonly string[] Neuerungen =
+        {
+            "Export direkt aus den Registerkarten 'Inhaltssuche' und 'Dateien umbenennen' (TXT/CSV, mit passend benannten Listen).",
+            "Abbrechen-Schaltfläche in 'Listenverschieber', 'Unvollständige Dateien' und 'Dateien umbenennen'; begonnene Dateigruppen werden sauber zu Ende geführt.",
+            "Trennzeichen-Suche nachvollziehbar: neue Spalten 'Gesucht' und 'Gefunden' in der Ergebnisliste.",
+            "Fortschrittsanzeige nennt den aktuell gesuchten Begriff und die Trefferzahl."
+        };
 
         /// <summary>Verwendete Technologien.</summary>
         public static readonly (string Bereich, string Wert)[] Technologie =

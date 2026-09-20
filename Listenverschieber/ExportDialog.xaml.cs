@@ -10,7 +10,9 @@ namespace Listenverschieber
     {
         Suchlauf,
         Kopieren,
-        Verschieben
+        Verschieben,
+        Inhaltssuche,
+        Umbenennen
     }
 
     /// <summary>
@@ -106,6 +108,8 @@ namespace Listenverschieber
             {
                 ExportListenModus.Suchlauf => ("Gefundene Dateien", "Nicht gefundene Dateien"),
                 ExportListenModus.Kopieren => ("Kopierte Dateien", "Nicht kopierte Dateien"),
+                ExportListenModus.Inhaltssuche => ("Dateien mit Treffer", "Dateien ohne Treffer"),
+                ExportListenModus.Umbenennen => ("Umbenannte Dateien", "Nicht umbenannte Dateien"),
                 _ => ("Verschobene Dateien", "Nicht verschobene Dateien")
             };
 

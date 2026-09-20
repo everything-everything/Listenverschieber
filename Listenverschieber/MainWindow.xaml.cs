@@ -26,6 +26,12 @@ namespace Listenverschieber
         public string Status { get; set; } = "";
         public string VollstaendigerPfad { get; set; } = "";
         public string AnzeigePfad { get; set; } = "";
+
+        /// <summary>Der tatsaechlich verwendete Suchbegriff (bei Trennzeichensuche nur der Abschnitt).</summary>
+        public string Suchbegriff { get; set; } = "";
+
+        /// <summary>Der Teil des Dateinamens, der auf den Suchbegriff gepasst hat.</summary>
+        public string Fundstelle { get; set; } = "";
     }
 
     public partial class MainWindow : Window
@@ -36,6 +42,15 @@ namespace Listenverschieber
         private string[] csvHeaders = Array.Empty<string>();
         private int selectedCsvColumnIndex = -1;
         private bool isProcessing = false;
+
+        /// <summary>
+        /// Abbruchsteuerung fuer die Laeufe in Tab 1 und Tab 2.
+        ///
+        /// Beide Tabs koennen nie gleichzeitig laufen, da waehrend eines Laufs
+        /// alle Startknoepfe gesperrt sind. Ein gemeinsames Feld genuegt daher
+        /// und haelt die Abbruchlogik an einer Stelle.
+        /// </summary>
+        private CancellationTokenSource? laufAbbruch;
 
         private List<string> verschobeneDateienListe = new List<string>();
         private List<string> nichtGefundeneDateienListe = new List<string>();
@@ -134,7 +149,20 @@ namespace Listenverschieber
         private static bool TrennzeichenTreffer(string dateiName, string suchName, bool trennzeichenAuto,
             string trennzeichenManuell, bool abschnittAuto, int abschnittNummer, bool einzelabschnitt,
             bool vonVorne, bool vonHinten)
+            => TrennzeichenTreffer(dateiName, suchName, trennzeichenAuto, trennzeichenManuell, abschnittAuto,
+                abschnittNummer, einzelabschnitt, vonVorne, vonHinten, out _, out _);
+
+        /// <summary>
+        /// Wie <see cref="TrennzeichenTreffer(string, string, bool, string, bool, int, bool, bool, bool)"/>,
+        /// liefert zusaetzlich den tatsaechlich verglichenen Abschnitt aus Listeneintrag und Dateiname.
+        /// </summary>
+        private static bool TrennzeichenTreffer(string dateiName, string suchName, bool trennzeichenAuto,
+            string trennzeichenManuell, bool abschnittAuto, int abschnittNummer, bool einzelabschnitt,
+            bool vonVorne, bool vonHinten, out string gesuchterAbschnitt, out string gefundenerAbschnitt)
         {
+            gesuchterAbschnitt = "";
+            gefundenerAbschnitt = "";
+
             string trenner = ErmittleTrennzeichen(suchName, trennzeichenAuto, trennzeichenManuell);
             if (string.IsNullOrEmpty(trenner))
                 return false;
@@ -165,7 +193,11 @@ namespace Listenverschieber
                         ? suchName
                         : (einzelabschnitt ? suchTeile[n - 1] : string.Join(trenner, suchTeile.Take(n)));
                     if (abschnittDatei.Equals(abschnittSuche, StringComparison.OrdinalIgnoreCase))
+                    {
+                        gesuchterAbschnitt = abschnittSuche;
+                        gefundenerAbschnitt = abschnittDatei;
                         return true;
+                    }
                 }
 
                 if (vonHinten)
@@ -177,11 +209,44 @@ namespace Listenverschieber
                         ? suchName
                         : (einzelabschnitt ? suchTeile[suchTeile.Length - n] : string.Join(trenner, suchTeile.Skip(suchTeile.Length - n)));
                     if (abschnittDatei.Equals(abschnittSuche, StringComparison.OrdinalIgnoreCase))
+                    {
+                        gesuchterAbschnitt = abschnittSuche;
+                        gefundenerAbschnitt = abschnittDatei;
                         return true;
+                    }
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Ermittelt den Suchbegriff, der bei Trennzeichensuche fuer einen Listeneintrag
+        /// tatsaechlich verwendet wird - unabhaengig davon, ob eine Datei gefunden wurde.
+        /// </summary>
+        private static string TrennzeichenSuchbegriff(string suchName, bool trennzeichenAuto,
+            string trennzeichenManuell, bool abschnittAuto, int abschnittNummer, bool einzelabschnitt,
+            bool vonHinten)
+        {
+            string trenner = ErmittleTrennzeichen(suchName, trennzeichenAuto, trennzeichenManuell);
+            if (string.IsNullOrEmpty(trenner) || abschnittAuto)
+                return suchName;
+
+            var suchTeile = suchName.Split(new[] { trenner }, StringSplitOptions.None);
+            int n = abschnittNummer;
+            if (n < 1 || n > suchTeile.Length)
+                return suchName;
+
+            if (vonHinten)
+            {
+                return einzelabschnitt
+                    ? suchTeile[suchTeile.Length - n]
+                    : string.Join(trenner, suchTeile.Skip(suchTeile.Length - n));
+            }
+
+            return einzelabschnitt
+                ? suchTeile[n - 1]
+                : string.Join(trenner, suchTeile.Take(n));
         }
 
         private void LadeKonfiguration()
@@ -511,6 +576,21 @@ namespace Listenverschieber
             btnDateienSuchlauf.IsEnabled = canProcess;
             btnDateienKopieren.IsEnabled = canProcess;
             btnDateienVerschieben.IsEnabled = canProcess;
+
+            // Abbrechen ist genau dann sinnvoll, wenn gerade verarbeitet wird
+            btnDateienAbbrechen.IsEnabled = isProcessing;
+        }
+
+        /// <summary>Fordert den Abbruch des laufenden Vorgangs an.</summary>
+        private void btnLaufAbbrechen_Click(object sender, RoutedEventArgs e)
+        {
+            if (laufAbbruch == null || laufAbbruch.IsCancellationRequested)
+            {
+                return;
+            }
+
+            laufAbbruch.Cancel();
+            LogMessage("Abbruch angefordert - der Vorgang endet nach der aktuellen Datei.");
         }
 
         private void LogMessage(string message)
@@ -598,6 +678,23 @@ namespace Listenverschieber
         {
             bool processAllPaths = chkProcessAllWatchPaths?.IsChecked == true;
 
+            laufAbbruch?.Dispose();
+            laufAbbruch = new CancellationTokenSource();
+            try
+            {
+                await UnvollstaendigeDateienLaufAsync(modus, processAllPaths);
+            }
+            finally
+            {
+                laufAbbruch?.Dispose();
+                laufAbbruch = null;
+            }
+        }
+
+        private async Task UnvollstaendigeDateienLaufAsync(DateiOperationModus modus, bool processAllPaths)
+        {
+            var abbruchToken = laufAbbruch?.Token ?? CancellationToken.None;
+
             // Auto-Rückverschiebung prüfen
             int countdownSekunden = 0;
             bool autoReturn = modus == DateiOperationModus.Verschieben
@@ -615,6 +712,12 @@ namespace Listenverschieber
                 }
                 for (int p = 0; p < pfadListe.Count; p++)
                 {
+                    if (abbruchToken.IsCancellationRequested)
+                    {
+                        LogMessage2($"=== Abgebrochen nach {p} von {pfadListe.Count} Pfaden ===");
+                        break;
+                    }
+
                     var pfad = pfadListe[p];
                     if (modus != DateiOperationModus.Suchlauf) verschobeneDateienInfo.Clear();
 
@@ -664,6 +767,7 @@ namespace Listenverschieber
             btnUnvollstaendigeSuchlauf.IsEnabled = false;
             btnUnvollstaendigeKopieren.IsEnabled = false;
             btnUnvollstaendigeVerschieben.IsEnabled = false;
+            btnUnvollstaendigeAbbrechen.IsEnabled = true;
 
             await Task.Run(() => UnvollstaendigeDateienVerarbeitenCoreAsync(ueberwachungspfad, modus));
 
@@ -671,6 +775,7 @@ namespace Listenverschieber
             btnUnvollstaendigeSuchlauf.IsEnabled = true;
             btnUnvollstaendigeKopieren.IsEnabled = true;
             btnUnvollstaendigeVerschieben.IsEnabled = true;
+            btnUnvollstaendigeAbbrechen.IsEnabled = false;
             btnDateienZurueckschieben.IsEnabled = verschobeneDateienInfo.Count > 0;
         }
 
@@ -745,6 +850,15 @@ namespace Listenverschieber
 
             foreach (var gruppe in gruppen)
             {
+                // Abbruch wirkt erst zwischen zwei Dateigruppen, damit keine
+                // Gruppe halb verschoben zurueckbleibt.
+                if (laufAbbruch?.IsCancellationRequested == true)
+                {
+                    await Dispatcher.InvokeAsync(() =>
+                        LogMessage2($"=== Abgebrochen nach {processed} von {gruppen.Count} Gruppen ==="));
+                    break;
+                }
+
                 processed++;
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -1072,6 +1186,8 @@ namespace Listenverschieber
             }
 
             isProcessing = true;
+            laufAbbruch = new CancellationTokenSource();
+            var abbruchToken = laufAbbruch.Token;
             UpdateButtonState();
             grpFortschritt.Visibility = Visibility.Visible;
 
@@ -1160,6 +1276,15 @@ namespace Listenverschieber
 
                 for (int i = 0; i < arbeitsListe.Count; i++)
                 {
+                    // Abbruch nur zwischen zwei Listeneintraegen: eine begonnene
+                    // Dateioperation wird immer zu Ende gefuehrt.
+                    if (abbruchToken.IsCancellationRequested)
+                    {
+                        await Dispatcher.InvokeAsync(() =>
+                            LogMessage($"=== Abgebrochen nach {i} von {arbeitsListe.Count} Eintraegen ==="));
+                        break;
+                    }
+
                     string dateiName = arbeitsListe[i].Trim();
                     await Dispatcher.InvokeAsync(() =>
                     {
@@ -1168,12 +1293,22 @@ namespace Listenverschieber
                     });
 
                     List<string> gefundeneDateien = new List<string>();
+
+                    // Anzeige-Infos: was wird tatsaechlich gesucht und was wurde gefunden?
+                    string aktuellerSuchbegriff = dateiName;
+                    var fundstellen = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
                     if (nameBeginntMit || nameEndetMit)
                     {
                         // Teilname-Suche: Name ohne Endung aus der Liste extrahieren
                         string suchName = ignoreExtension
                             ? Path.GetFileNameWithoutExtension(dateiName)
                             : dateiName;
+                        aktuellerSuchbegriff = trennzeichenSuche
+                            ? TrennzeichenSuchbegriff(suchName, trennzeichenAuto, trennzeichenManuell,
+                                abschnittAuto, abschnittNummer, einzelabschnitt, nameEndetMit)
+                            : suchName;
+
                         var allFiles = Directory.GetFiles(arbeitspfad, "*.*", SearchOption.TopDirectoryOnly);
                         gefundeneDateien = allFiles.Where(f =>
                         {
@@ -1183,14 +1318,28 @@ namespace Listenverschieber
 
                             if (trennzeichenSuche)
                             {
-                                return TrennzeichenTreffer(fileName, suchName, trennzeichenAuto, trennzeichenManuell,
-                                    abschnittAuto, abschnittNummer, einzelabschnitt, nameBeginntMit, nameEndetMit);
+                                bool treffer = TrennzeichenTreffer(fileName, suchName, trennzeichenAuto, trennzeichenManuell,
+                                    abschnittAuto, abschnittNummer, einzelabschnitt, nameBeginntMit, nameEndetMit,
+                                    out string gesucht, out string gefundenerTeil);
+                                if (treffer)
+                                {
+                                    fundstellen[Path.GetFileName(f)] = gefundenerTeil;
+                                    if (!string.IsNullOrEmpty(gesucht))
+                                        aktuellerSuchbegriff = gesucht;
+                                }
+                                return treffer;
                             }
 
                             if (nameBeginntMit && fileName.StartsWith(suchName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                fundstellen[Path.GetFileName(f)] = fileName.Substring(0, suchName.Length);
                                 return true;
+                            }
                             if (nameEndetMit && fileName.EndsWith(suchName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                fundstellen[Path.GetFileName(f)] = fileName.Substring(fileName.Length - suchName.Length);
                                 return true;
+                            }
                             return false;
                         }).ToList();
                     }
@@ -1222,6 +1371,8 @@ namespace Listenverschieber
                         }
                     }
 
+                    int ergebnisStart = await Dispatcher.InvokeAsync(() => GefundeneDateien.Count);
+
                     if (gefundeneDateien.Count > 0)
                     {
                         gefunden += gefundeneDateien.Count;
@@ -1236,7 +1387,10 @@ namespace Listenverschieber
                                     verschobeneDateienListe.Add(fileName);
                                     await Dispatcher.InvokeAsync(() =>
                                     {
-                                        LogMessage($"[Suchlauf] Gefunden: {fileName}");
+                                        string trefferInfo = fundstellen.TryGetValue(fileName, out string? trefferTeil)
+                                            ? $", Fundstelle: '{trefferTeil}'"
+                                            : "";
+                                        LogMessage($"[Suchlauf] Gefunden: {fileName} (gesucht: '{aktuellerSuchbegriff}'{trefferInfo})");
                                         GefundeneDateien.Add(new DateiEintrag
                                         {
                                             Dateiname = fileName,
@@ -1412,7 +1566,7 @@ namespace Listenverschieber
                         nichtGefundeneDateienListe.Add(dateiName);
                         await Dispatcher.InvokeAsync(() =>
                         {
-                            LogMessage($"Nicht gefunden: {dateiName}");
+                            LogMessage($"Nicht gefunden: {dateiName} (gesucht: '{aktuellerSuchbegriff}')");
                             GefundeneDateien.Add(new DateiEintrag
                             {
                                 Dateiname = dateiName,
@@ -1422,23 +1576,49 @@ namespace Listenverschieber
                             });
                         });
                     }
+
+                    // Alle in diesem Durchlauf erzeugten Ergebniszeilen mit den
+                    // Anzeige-Infos "was wurde gesucht / was wurde gefunden" versehen.
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        for (int z = ergebnisStart; z < GefundeneDateien.Count; z++)
+                        {
+                            var eintrag = GefundeneDateien[z];
+                            eintrag.Suchbegriff = aktuellerSuchbegriff;
+                            if (string.IsNullOrEmpty(eintrag.Fundstelle)
+                                && fundstellen.TryGetValue(eintrag.Dateiname, out string? fund))
+                            {
+                                eintrag.Fundstelle = fund;
+                            }
+                        }
+                        dgGefundeneDateien.Items.Refresh();
+
+                        txtFortschritt.Text = gefundeneDateien.Count > 0
+                            ? $"{modusText} {i + 1} von {arbeitsListe.Count}: gesucht '{aktuellerSuchbegriff}' - {gefundeneDateien.Count} Treffer"
+                            : $"{modusText} {i + 1} von {arbeitsListe.Count}: gesucht '{aktuellerSuchbegriff}' - kein Treffer";
+                    });
                 }
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    LogMessage("\n=== Fertig ===");
+                    bool abgebrochen = abbruchToken.IsCancellationRequested;
+                    LogMessage(abgebrochen ? "\n=== Abgebrochen ===" : "\n=== Fertig ===");
                     LogMessage($"Gefunden: {gefunden} Dateien");
                     LogMessage($"Nicht gefunden: {nichtGefunden} Dateien");
                     if (modus != DateiOperationModus.Suchlauf)
                         LogMessage($"{modusText}: {verschoben} Dateien");
-                    txtStatus.Text = $"{modusText} abgeschlossen: {gefunden} gefunden, {nichtGefunden} nicht gefunden";
+                    txtStatus.Text = abgebrochen
+                        ? $"{modusText} abgebrochen: {gefunden} gefunden, {nichtGefunden} nicht gefunden"
+                        : $"{modusText} abgeschlossen: {gefunden} gefunden, {nichtGefunden} nicht gefunden";
                     if (modus != DateiOperationModus.Suchlauf)
-                        System.Windows.MessageBox.Show($"{modusText} abgeschlossen!\n\nGefunden: {gefunden}\nNicht gefunden: {nichtGefunden}\n{modusText}: {verschoben}", "Fertig", MessageBoxButton.OK, MessageBoxImage.Information);
+                        System.Windows.MessageBox.Show($"{modusText} {(abgebrochen ? "abgebrochen" : "abgeschlossen")}!\n\nGefunden: {gefunden}\nNicht gefunden: {nichtGefunden}\n{modusText}: {verschoben}", "Fertig", MessageBoxButton.OK, MessageBoxImage.Information);
                 });
             });
 
             grpFortschritt.Visibility = Visibility.Collapsed;
             isProcessing = false;
+            laufAbbruch?.Dispose();
+            laufAbbruch = null;
             UpdateButtonState();
         }
         #endregion

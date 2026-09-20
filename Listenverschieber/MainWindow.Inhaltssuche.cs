@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using WinForms = System.Windows.Forms;
@@ -18,6 +19,12 @@ namespace Listenverschieber
         public string Fundstelle { get; set; } = "";
         public string AnzeigePfad { get; set; } = "";
         public string VollstaendigerPfad { get; set; } = "";
+
+        /// <summary>Name der im Zielpfad gefundenen Partnerdatei (nur bei der Paarsuche).</summary>
+        public string Partnerdatei { get; set; } = "";
+
+        /// <summary>Vollstaendiger Pfad der Partnerdatei (nur bei der Paarsuche).</summary>
+        public string PartnerPfad { get; set; } = "";
     }
 
     /// <summary>
@@ -33,6 +40,9 @@ namespace Listenverschieber
             dgInhGefundeneDateien.ItemsSource = inhaltsTreffer;
             cmbInhDateiEndungen.ItemsSource = EndungsAuswahl.Vorgaben;
             InhEndungenSetzen(EndungsAuswahl.AlleKennung);
+
+            cmbInhIndexEndungen.ItemsSource = EndungsAuswahl.Vorgaben;
+            InhIndexEndungenSetzen("ini");
         }
 
         /// <summary>Liest die aktuelle Endungsauswahl - egal ob Listeneintrag oder freie Eingabe.</summary>
@@ -476,6 +486,89 @@ namespace Listenverschieber
 
         #region Konfiguration
 
+        /// <summary>
+        /// Exportiert die Trefferliste der Inhaltssuche.
+        ///
+        /// Als Treffer gelten Dateien, bei denen der Suchbegriff gefunden wurde
+        /// beziehungsweise eine Partnerdatei ermittelt werden konnte. Alles andere
+        /// - etwa uebersprungene oder fehlerhafte Dateien - bildet die Gegenliste,
+        /// damit sich auch die Ausreisser eines Laufs auswerten lassen.
+        /// </summary>
+        private void btnInhExport_Click(object sender, RoutedEventArgs e)
+        {
+            if (inhaltsTreffer.Count == 0)
+            {
+                MessageBox.Show("Es liegen keine Ergebnisse vor. Bitte zuerst einen Suchlauf ausführen.",
+                    "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var mitTreffer = new List<string>();
+            var ohneTreffer = new List<string>();
+
+            foreach (var treffer in inhaltsTreffer)
+            {
+                bool erfolgreich = !string.IsNullOrEmpty(treffer.PartnerPfad)
+                    || treffer.Status.StartsWith("Gefunden", StringComparison.OrdinalIgnoreCase)
+                    || treffer.Status.StartsWith("Kopiert", StringComparison.OrdinalIgnoreCase)
+                    || treffer.Status.StartsWith("Verschoben", StringComparison.OrdinalIgnoreCase)
+                    || treffer.Status.StartsWith("Paar gefunden", StringComparison.OrdinalIgnoreCase);
+
+                (erfolgreich ? mitTreffer : ohneTreffer).Add(treffer.Dateiname);
+            }
+
+            var dialog = new ExportDialog(mitTreffer.Count, ohneTreffer.Count,
+                ExportListenModus.Inhaltssuche) { Owner = this };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            var encoding = dialog.ExportAlsUtf8 ? Encoding.UTF8 : Encoding.GetEncoding(1252);
+
+            // Die Protokollauswahl bezieht sich auf das Protokoll dieses Tabs
+            if (dialog.ExportSuchprotokoll || dialog.ExportKopierprotokoll || dialog.ExportKomplettesProtokoll)
+            {
+                ExportListe(txtInhLog.Text.Split('\n').ToList(), "Inhaltssuche_Protokoll", "txt", encoding);
+                return;
+            }
+
+            List<string> quellListe;
+            string bezeichnung;
+
+            if (dialog.ExportAlle)
+            {
+                quellListe = mitTreffer.Concat(ohneTreffer).ToList();
+                bezeichnung = dialog.BezeichnungAlle;
+            }
+            else if (dialog.ExportVerschobene)
+            {
+                quellListe = mitTreffer;
+                bezeichnung = dialog.BezeichnungTreffer;
+            }
+            else
+            {
+                quellListe = ohneTreffer;
+                bezeichnung = dialog.BezeichnungGegenteil;
+            }
+
+            var liste = dialog.Kuerzen.Aktiv
+                ? quellListe.Select(dialog.Kuerzen.Anwenden).ToList()
+                : quellListe;
+
+            string beschreibung = bezeichnung.Replace(' ', '_');
+
+            if (dialog.ExportAlsCsv)
+            {
+                ExportListeAlsCsv(liste, beschreibung, encoding);
+            }
+            else
+            {
+                ExportListe(liste, beschreibung, "txt", encoding);
+            }
+        }
+
         private void InhKonfigurationLaden(PfadKonfiguration konfiguration)
         {
             txtInhSuchpfad.Text = konfiguration.InhSuchpfad;
@@ -496,6 +589,15 @@ namespace Listenverschieber
             chkInhPlatzhalter.IsChecked = konfiguration.InhPlatzhalter;
             chkInhGleichnamige.IsChecked = konfiguration.InhGleichnamigeMitnehmen;
             cmbInhKonflikt.SelectedIndex = konfiguration.InhKonfliktAktion;
+
+            // Paarsuche ueber den Inhaltsindex
+            chkInhZielDuplikate.IsChecked = konfiguration.InhZielDuplikate;
+            txtInhIndexPfad.Text = konfiguration.InhIndexPfad;
+            txtInhPaarSchluessel.Text = konfiguration.InhPaarSchluessel;
+            cmbInhPaarVergleich.SelectedIndex = Math.Max(0, konfiguration.InhPaarVergleichsart);
+            InhIndexEndungenSetzen(konfiguration.InhIndexEndungen);
+            chkInhIndexUnterordner.IsChecked = konfiguration.InhIndexUnterordner;
+            InhIndexStatusAktualisieren();
         }
 
         private void InhKonfigurationSpeichern(PfadKonfiguration konfiguration)
@@ -512,6 +614,13 @@ namespace Listenverschieber
             konfiguration.InhPlatzhalter = chkInhPlatzhalter.IsChecked == true;
             konfiguration.InhGleichnamigeMitnehmen = chkInhGleichnamige.IsChecked == true;
             konfiguration.InhKonfliktAktion = Math.Max(0, cmbInhKonflikt.SelectedIndex);
+
+            konfiguration.InhZielDuplikate = chkInhZielDuplikate.IsChecked == true;
+            konfiguration.InhIndexPfad = txtInhIndexPfad.Text;
+            konfiguration.InhPaarSchluessel = txtInhPaarSchluessel.Text;
+            konfiguration.InhPaarVergleichsart = Math.Max(0, cmbInhPaarVergleich.SelectedIndex);
+            konfiguration.InhIndexEndungen = InhIndexEndungenText();
+            konfiguration.InhIndexUnterordner = chkInhIndexUnterordner.IsChecked == true;
         }
 
         #endregion

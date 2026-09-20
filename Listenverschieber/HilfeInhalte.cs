@@ -164,6 +164,8 @@ namespace Listenverschieber
                 "2. Zu prüfende Dateiendungen festlegen.",
                 "3. Prüflauf starten.",
                 "4. Ergebnis in der Liste kontrollieren und bei Bedarf exportieren.",
+                "## Abbrechen",
+                "Ein laufender Prüflauf lässt sich mit 'Abbrechen' beenden. Der Abbruch greift zwischen zwei Dateigruppen, damit keine Gruppe nur teilweise verarbeitet zurückbleibt. Werden mehrere Überwachungspfade verarbeitet, endet der Lauf nach dem aktuellen Pfad.",
                 "## Hinweis",
                 "Die Zusammengehörigkeit wird über den Dateinamen ohne Endung ermittelt. Dateien mit gleichem Namen und unterschiedlicher Endung gelten als eine Gruppe."
             }
@@ -181,6 +183,10 @@ namespace Listenverschieber
                 "3. Falls die Kennung nur ein Teil des Dateinamens ist, das passende Trennzeichen angeben.",
                 "4. Suchlauf ausführen und das Ergebnis prüfen.",
                 "5. Erst danach Kopieren oder Verschieben starten.",
+                "## Trennzeichen-Suche nachvollziehen",
+                "Bei aktiver Trennzeichen-Suche wird nicht der komplette Dateiname verglichen, sondern nur der gewählte Abschnitt. Die Ergebnisliste zeigt deshalb zwei zusätzliche Spalten: 'Gesucht' enthält den tatsächlich verwendeten Suchbegriff, 'Gefunden' den passenden Teil des Dateinamens. Beispiel: Bei FILIALE_LRF_1_20260101_5227390, Abschnitt 2 und Zählrichtung von hinten steht unter 'Gesucht' der Wert 20260101_5227390.",
+                "## Abbrechen und Fortschritt",
+                "Während des Laufs zeigt die Fortschrittsanzeige an, welcher Begriff gerade gesucht wird und wie viele Treffer er geliefert hat. Mit 'Abbrechen' lässt sich der Vorgang stoppen; die gerade laufende Dateioperation wird noch zu Ende geführt, danach endet der Lauf.",
                 "## Namenskonflikte",
                 "Existiert im Zielordner bereits eine Datei gleichen Namens, erscheint der Konfliktdialog. Zur Auswahl stehen Überspringen, Überschreiben, Quelle umbenennen und Ziel umbenennen. Zusätzlich wird über einen Hashvergleich angezeigt, ob die Dateien tatsächlich identisch sind.",
                 "## Doppelte Einträge",
@@ -210,6 +216,10 @@ namespace Listenverschieber
                 "Das Ausgabeformat ist frei wählbar und folgt der .NET-Schreibweise, zum Beispiel yyyyMMdd für 20250401 oder dd.MM.yyyy für 01.04.2025.",
                 "## Gleichnamige Dateien mitumbenennen",
                 "Ist diese Option aktiv, werden alle Dateien mit gleichem Namen und anderer Endung mit umbenannt. So bleiben zusammengehörige Dateien wie Beleg.pdf und Beleg.txt weiterhin gepaart.",
+                "## Ergebnis exportieren",
+                "Über 'Exportieren' lassen sich die Ergebnisse als TXT oder CSV sichern. Angeboten werden 'Umbenannte Dateien' (mit dem neuen Namen), 'Nicht umbenannte Dateien' (mit dem ursprünglichen Namen) sowie beide Listen zusammen. Zusätzlich kann das Protokoll ausgegeben werden.",
+                "## Abbrechen",
+                "Ein laufender Umbenennungsvorgang lässt sich mit 'Abbrechen' stoppen. Der Abbruch wirkt zwischen zwei Dateigruppen, damit zusammengehörende Dateien nie nur teilweise umbenannt werden. Bereits umbenannte Dateien bleiben umbenannt.",
                 "## Wichtiger Hinweis",
                 "Umbenennen lässt sich nicht automatisch rückgängig machen. Prüfen Sie deshalb immer zuerst die Vorschau."
             }
@@ -240,6 +250,8 @@ namespace Listenverschieber
                 "In der Ergebnisliste wird zu jeder Datei ein Textausschnitt rund um die Fundstelle angezeigt, damit sich der Treffer schnell einordnen lässt.",
                 "## Abbrechen und Fortschritt",
                 "Der Suchlauf zeigt seinen Fortschritt an und kann jederzeit abgebrochen werden. Bereits abgeschlossene Dateioperationen bleiben dabei erhalten.",
+                "## Ergebnis exportieren",
+                "Über 'Exportieren' lassen sich die Ergebnisse als TXT oder CSV sichern. Angeboten werden 'Dateien mit Treffer', 'Dateien ohne Treffer' sowie beide Listen zusammen. Das Suchprotokoll kann zusätzlich ausgegeben werden.",
                 "## Namenskonflikte",
                 "Für das Kopieren und Verschieben legen Sie vorab fest, wie mit bereits vorhandenen Zieldateien umgegangen wird. Beim automatischen Umbenennen wird ein Zähler an den Dateinamen angehängt."
             }
@@ -271,6 +283,7 @@ namespace Listenverschieber
             Absaetze = new[]
             {
                 "Über 'Datei > Exportieren' lassen sich die Ergebnisse eines Laufs als Textdatei oder als CSV sichern.",
+                "Die Registerkarten 'Inhaltssuche' und 'Dateien umbenennen' besitzen zusätzlich eine eigene Schaltfläche 'Exportieren', die denselben Dialog mit passend benannten Listen öffnet.",
                 "## Welche Listen stehen zur Verfügung?",
                 "Es werden immer drei zueinander passende Listen angeboten. Welche das sind, richtet sich nach der zuletzt ausgeführten Aktion:",
                 "• Nach einem Suchlauf: 'Gefundene Dateien', 'Nicht gefundene Dateien' und 'Alle Dateien'.",

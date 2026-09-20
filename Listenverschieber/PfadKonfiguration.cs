@@ -75,6 +75,20 @@ namespace Listenverschieber
         public bool InhGleichnamigeMitnehmen { get; set; } = true;
         public int InhKonfliktAktion { get; set; } = 0;
 
+        // Tab 4 - Paarsuche ueber den Inhaltsindex
+        /// <summary>Prueft vor dem Uebertragen, ob die Datei inhaltlich schon im Ziel liegt.</summary>
+        public bool InhZielDuplikate { get; set; } = true;
+        /// <summary>Verzeichnis, in dem die zugehoerigen Dateien gesucht werden.</summary>
+        public string InhIndexPfad { get; set; } = "";
+        /// <summary>Vergleichsschluessel, einer je Zeile, z.B. "Datum=" oder "Belegnummer".</summary>
+        public string InhPaarSchluessel { get; set; } = "Datum\nBelegnummer";
+        /// <summary>0 = ausgewaehlte Schluessel, 1 = kompletter Inhalt (Pruefsumme).</summary>
+        public int InhPaarVergleichsart { get; set; } = 0;
+        /// <summary>Endungen, auf die sich der Index des Zielverzeichnisses beschraenkt.</summary>
+        public string InhIndexEndungen { get; set; } = "ini";
+        /// <summary>Unterordner des Zielverzeichnisses mit indizieren.</summary>
+        public bool InhIndexUnterordner { get; set; } = true;
+
         public static string ConfigFilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "Listenverschieber",
